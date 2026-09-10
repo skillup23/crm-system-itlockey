@@ -15,15 +15,24 @@ export const authOptions = {
       async authorize(credentials) {
         await connectMongo();
 
+        console.log('Попытка входа с email:', credentials.email); // Смотрим в консоли терминала
+
         const user = await User.findOne({ email: credentials.email });
-        if (!user) throw new Error('Пользователь не найден');
+        if (!user) {
+          console.log('Пользователь не найден в БД');
+          throw new Error('Неверный email или пароль');
+        }
 
         const isValid = await bcrypt.compare(
           credentials.password,
           user.password,
         );
-        if (!isValid) throw new Error('Неверный пароль');
+        if (!isValid) {
+          console.log('Пароли не совпадают');
+          throw new Error('Неверный email или пароль');
+        }
 
+        console.log('Авторизация успешна!');
         return {
           id: user._id,
           name: user.name,
