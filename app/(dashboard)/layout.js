@@ -12,6 +12,9 @@ export default function DashboardLayout({ children }) {
     { name: 'Дашборд', href: '/' },
     { name: 'Заявки', href: '/tasks' },
     { name: 'Организации', href: '/organizations' },
+    ...(session?.user?.role === 'admin'
+      ? [{ name: 'Сотрудники', href: '/users' }]
+      : []),
     { name: 'База знаний', href: '/faq' },
     { name: 'Платежи', href: '/payments' },
     { name: 'Бэкапы', href: '/backups' },

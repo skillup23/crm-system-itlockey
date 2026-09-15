@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -9,6 +9,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const { status } = useSession();
+
+  // Если сессия уже активна — перекидываем в систему
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/');
+    }
+  }, [status, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,6 +35,14 @@ export default function LoginPage() {
       router.refresh();
     }
   };
+
+  if (status === 'loading') {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-900 text-white text-sm">
+        Загрузка...
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen items-center justify-center bg-slate-900">

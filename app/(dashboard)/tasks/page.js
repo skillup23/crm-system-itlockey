@@ -140,6 +140,9 @@ export default function TasksPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/tasks/trash">
+            <Button variant="secondary">Корзина</Button>
+          </Link>
           <Button
             variant={isArchive ? 'primary' : 'secondary'}
             onClick={() => setIsArchive(!isArchive)}

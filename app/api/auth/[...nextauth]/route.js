@@ -17,22 +17,21 @@ export const authOptions = {
 
         console.log('Попытка входа с email:', credentials.email); // Смотрим в консоли терминала
 
-        const user = await User.findOne({ email: credentials.email });
-        if (!user) {
-          console.log('Пользователь не найден в БД');
-          throw new Error('Неверный email или пароль');
+        const user = await User.findOne({
+          email: credentials.email.toLowerCase().trim(),
+        });
+        if (!user) throw new Error('Пользователь не найден');
+
+        if (user.isActive === false) {
+          throw new Error('Учетная запись заблокирована');
         }
 
         const isValid = await bcrypt.compare(
           credentials.password,
           user.password,
         );
-        if (!isValid) {
-          console.log('Пароли не совпадают');
-          throw new Error('Неверный email или пароль');
-        }
+        if (!isValid) throw new Error('Неверный пароль');
 
-        console.log('Авторизация успешна!');
         return {
           id: user._id,
           name: user.name,
