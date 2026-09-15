@@ -126,7 +126,7 @@ export default function OrganizationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Организации</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-slate-500">
             Учет обслуживаемых компаний и назначение доступов сотрудникам
           </p>
         </div>

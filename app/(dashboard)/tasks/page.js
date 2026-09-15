@@ -133,7 +133,7 @@ export default function TasksPage() {
           <h1 className="text-2xl font-bold text-slate-900">
             {isArchive ? 'Архив заявок' : 'Заявки'}
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-slate-500">
             {isArchive
               ? 'Список завершенных и заархивированных задач'
               : 'Текущие задачи и обращения клиентов'}
@@ -141,16 +141,23 @@ export default function TasksPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/tasks/trash">
-            <Button variant="secondary">Корзина</Button>
+            <Button variant="secondary" className="cursor-pointer">
+              Корзина
+            </Button>
           </Link>
           <Button
             variant={isArchive ? 'primary' : 'secondary'}
             onClick={() => setIsArchive(!isArchive)}
+            className="cursor-pointer"
           >
             {isArchive ? 'К активным заявкам' : 'Открыть архив'}
           </Button>
           {!isArchive && (
-            <Button variant="primary" onClick={() => setIsCreateOpen(true)}>
+            <Button
+              variant="primary"
+              onClick={() => setIsCreateOpen(true)}
+              className="cursor-pointer"
+            >
               + Добавить заявку
             </Button>
           )}
@@ -241,7 +248,7 @@ export default function TasksPage() {
                       <span className="font-bold text-slate-900 text-base">
                         {task.title}
                       </span>
-                      <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
+                      <span className="text-sm px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
                         {task.company}
                       </span>
                       <StatusBadge status={task.status} />
@@ -253,7 +260,7 @@ export default function TasksPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 line-clamp-1">
+                    <p className="text-sm text-slate-500 line-clamp-1">
                       {task.description || 'Без описания'}
                     </p>
                   </div>

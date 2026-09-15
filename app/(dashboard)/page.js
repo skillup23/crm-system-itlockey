@@ -1,31 +1,69 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import StatCard from '@/components/ui/StatCard';
+import StatusBadge from '@/components/ui/StatusBadge';
 
 export default function Home() {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      try {
+        const res = await fetch('/api/tasks');
+        const data = await res.json();
+        if (!ignore && Array.isArray(data)) {
+          setTasks(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (!ignore) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  // Вычисляем показатели
+  const openCount = tasks.filter((t) => t.status === 'Открыта').length;
+  const inProgressCount = tasks.filter((t) => t.status === 'В работе').length;
+  const waitingCount = tasks.filter((t) => t.status === 'Ожидание').length;
+
+  const urgentCount = tasks.filter((t) => {
+    if (!t.todoDeadline || t.status === 'Закрыта') return false;
+    const diffDays = Math.ceil(
+      (new Date(t.todoDeadline) - new Date()) / (1000 * 60 * 60 * 24),
+    );
+    return diffDays <= 3;
+  }).length;
+
   const stats = [
     {
       title: 'Новых заявок',
-      count: 0,
+      count: openCount,
       color: 'border-l-blue-500',
       textColor: 'text-blue-600',
     },
     {
       title: 'В работе',
-      count: 0,
+      count: inProgressCount,
       color: 'border-l-amber-500',
       textColor: 'text-amber-600',
     },
     {
       title: 'Ожидают ответа',
-      count: 0,
+      count: waitingCount,
       color: 'border-l-purple-500',
       textColor: 'text-purple-600',
     },
     {
       title: 'Горящие дедлайны',
-      count: 0,
+      count: urgentCount,
       color: 'border-l-red-500',
       textColor: 'text-red-600',
     },
@@ -36,12 +74,12 @@ export default function Home() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Сводка задач</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-slate-500">
             Оперативная информация по IT-заявкам клиентов
           </p>
         </div>
         <Link
-          href="/tasks/new"
+          href="/tasks"
           className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 shadow-sm transition-all"
         >
           + Создать заявку
@@ -64,70 +102,96 @@ export default function Home() {
         <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <h2 className="text-base font-semibold text-slate-800">
-              Текущие заявки
+              Свежие заявки
             </h2>
             <Link
               href="/tasks"
-              className="text-xs font-medium text-blue-600 hover:text-blue-800"
+              className="text-sm font-medium text-blue-600 hover:text-blue-800"
             >
-              Смотреть все →
+              Все задачи →
             </Link>
           </div>
-          <div className="py-12 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-400 mb-3">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.5"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-            </div>
-            <p className="text-sm font-medium text-slate-600">
-              Активных задач нет
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Очередь чиста, либо создайте новую заявку через кнопку выше
-            </p>
+
+          <div className="mt-4">
+            {loading ? (
+              <div className="py-8 text-center text-sm text-slate-400">
+                Загрузка...
+              </div>
+            ) : tasks.length === 0 ? (
+              <div className="py-8 text-center text-sm text-slate-400">
+                Активных задач нет
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {tasks.slice(0, 5).map((t) => (
+                  <Link
+                    key={t._id}
+                    href={`/tasks/${t._id}`}
+                    className="py-3 flex items-center justify-between hover:bg-slate-50 px-2 rounded-lg transition-colors group"
+                  >
+                    <div className="space-y-1">
+                      <div className="font-semibold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
+                        {t.title}
+                      </div>
+                      <div className="text-[11px] text-slate-400 flex items-center gap-2">
+                        <span>{t.company}</span>
+                        <span>•</span>
+                        <span>Исполнитель: {t.executor?.name || '—'}</span>
+                      </div>
+                    </div>
+                    <StatusBadge status={t.status} />
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <h2 className="text-base font-semibold text-slate-800 pb-4 border-b border-slate-100 mb-4">
-            Быстрый доступ
+            Инфраструктура
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <Link
-              href="/organizations"
+              href="/backups"
               className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition-all"
             >
-              <span className="text-sm font-medium text-slate-700">
-                Организации на обслуживании
-              </span>
+              <div>
+                <span className="text-sm font-semibold text-slate-800 block">
+                  Контроль бэкапов
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Журнал резервных копий
+                </span>
+              </div>
+              <span className="text-sm text-slate-400">→</span>
+            </Link>
+            <Link
+              href="/payments"
+              className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition-all"
+            >
+              <div>
+                <span className="text-sm font-semibold text-slate-800 block">
+                  Плановые платежи
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Сроки доменов и серверов
+                </span>
+              </div>
               <span className="text-xs text-slate-400">→</span>
             </Link>
             <Link
               href="/faq"
               className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition-all"
             >
-              <span className="text-sm font-medium text-slate-700">
-                База инструкций IT
-              </span>
-              <span className="text-xs text-slate-400">→</span>
-            </Link>
-            <Link
-              href="/payments"
-              className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition-all"
-            >
-              <span className="text-sm font-medium text-slate-700">
-                Оплата доменов и серверов
-              </span>
+              <div>
+                <span className="text-sm font-semibold text-slate-800 block">
+                  База знаний
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Инструкции и Markdown-статьи
+                </span>
+              </div>
               <span className="text-xs text-slate-400">→</span>
             </Link>
           </div>

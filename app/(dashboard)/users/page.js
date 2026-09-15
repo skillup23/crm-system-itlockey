@@ -96,7 +96,7 @@ export default function UsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Сотрудники</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-slate-500">
             Управление учетными записями, ролями и доступом команды
           </p>
         </div>
