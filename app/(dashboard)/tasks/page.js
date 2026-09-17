@@ -131,7 +131,7 @@ export default function TasksPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            {isArchive ? 'Архив заявок' : 'Заявки'}
+            {isArchive ? 'Архив задач' : 'Задачи'}
           </h1>
           <p className="text-base text-slate-500">
             {isArchive
@@ -150,7 +150,7 @@ export default function TasksPage() {
             onClick={() => setIsArchive(!isArchive)}
             className="cursor-pointer"
           >
-            {isArchive ? 'К активным заявкам' : 'Открыть архив'}
+            {isArchive ? 'К активным задачам' : 'Открыть архив'}
           </Button>
           {!isArchive && (
             <Button
@@ -158,7 +158,7 @@ export default function TasksPage() {
               onClick={() => setIsCreateOpen(true)}
               className="cursor-pointer"
             >
-              + Добавить заявку
+              + Добавить задачу
             </Button>
           )}
         </div>
@@ -221,11 +221,11 @@ export default function TasksPage() {
       <div className="space-y-3">
         {loading ? (
           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-500 shadow-sm">
-            Загрузка заявок...
+            Загрузка задач...
           </div>
         ) : tasks.length === 0 ? (
           <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-sm text-slate-500 shadow-sm">
-            Заявок не найдено
+            Задач не найдено
           </div>
         ) : (
           tasks.map((task) => {
@@ -268,9 +268,11 @@ export default function TasksPage() {
                   {/* Мета-информация */}
                   <div className="flex items-center gap-4 text-xs text-slate-500 shrink-0 self-start md:self-auto">
                     <div>
-                      <span className="text-slate-400">Исполнитель: </span>
+                      <span className="text-slate-400">Исполнители: </span>
                       <span className="font-medium text-slate-700">
-                        {task.executor?.name || 'Не назначен'}
+                        {task.executors?.length > 0
+                          ? task.executors.map((e) => e.name).join(', ')
+                          : 'Не назначены'}
                       </span>
                     </div>
                     {task.todoDeadline && (
@@ -296,7 +298,7 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* Модальное окно создания заявки */}
+      {/* Модальное окно создания задачи */}
       <TaskCreateModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}

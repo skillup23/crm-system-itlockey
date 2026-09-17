@@ -34,7 +34,11 @@ export default function TaskDetailPage({ params }) {
         fetch('/api/organizations'),
       ]);
 
-      if (!taskRes.ok) throw new Error('Заявка не найдена');
+      if (taskRes.status === 403) {
+        throw new Error('Доступ закрыт');
+      }
+
+      if (!taskRes.ok) throw new Error('Задача не найдена');
 
       const taskData = await taskRes.json();
       const usersData = await usersRes.json();
@@ -49,7 +53,7 @@ export default function TaskDetailPage({ params }) {
         description: taskData.description || '',
         company: taskData.company,
         status: taskData.status,
-        executor: taskData.executor?._id || '',
+        executors: taskData.executors?.map((u) => u._id || u) || [],
         manager: taskData.manager?._id || '',
         todoDeadline: taskData.todoDeadline
           ? taskData.todoDeadline.substring(0, 10)
@@ -74,7 +78,11 @@ export default function TaskDetailPage({ params }) {
           fetch('/api/organizations'),
         ]);
 
-        if (!taskRes.ok) throw new Error('Заявка не найдена');
+        if (taskRes.status === 403) {
+          throw new Error('Доступ закрыт');
+        }
+
+        if (!taskRes.ok) throw new Error('Задача не найдена');
 
         const taskData = await taskRes.json();
         const usersData = await usersRes.json();
@@ -90,7 +98,7 @@ export default function TaskDetailPage({ params }) {
             description: taskData.description || '',
             company: taskData.company,
             status: taskData.status,
-            executor: taskData.executor?._id || '',
+            executors: taskData.executors?.map((u) => u._id || u) || [],
             manager: taskData.manager?._id || '',
             todoDeadline: taskData.todoDeadline
               ? taskData.todoDeadline.substring(0, 10)
@@ -112,8 +120,23 @@ export default function TaskDetailPage({ params }) {
     };
   }, [id]);
 
+  const toggleExecutorEdit = (userId) => {
+    setFormData((prev) => {
+      const current = prev.executors || [];
+      const updated = current.includes(userId)
+        ? current.filter((uid) => uid !== userId)
+        : [...current, userId];
+      return { ...prev, executors: updated };
+    });
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
+    if (!formData.executors || formData.executors.length === 0) {
+      setErrorMessage('Укажите хотя бы одного исполнителя');
+      return;
+    }
+
     setSaving(true);
     setErrorMessage('');
 
@@ -167,7 +190,28 @@ export default function TaskDetailPage({ params }) {
   if (loading) {
     return (
       <div className="p-8 text-center text-sm text-slate-500">
-        Загрузка данных заявки...
+        Загрузка данных задачи...
+      </div>
+    );
+  }
+
+  // Экран закрытого доступа
+  if (errorMessage === 'Доступ закрыт') {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center max-w-md mx-auto my-12 shadow-sm space-y-4">
+        <div className="text-3xl">🚫</div>
+        <h2 className="text-lg font-bold text-slate-900">Доступ закрыт</h2>
+        <p className="text-sm text-slate-500">
+          У вас нет прав для просмотра этой задачи.
+        </p>
+        <div>
+          <Link
+            href="/tasks"
+            className="text-sm font-semibold text-blue-600 hover:underline"
+          >
+            ← Вернуться к Задачам
+          </Link>
+        </div>
       </div>
     );
   }
@@ -175,7 +219,7 @@ export default function TaskDetailPage({ params }) {
   if (!task) {
     return (
       <div className="p-8 text-center text-sm text-red-500">
-        Заявка не найдена.{' '}
+        Задача не найдена.{' '}
         <Link href="/tasks" className="text-blue-600 underline">
           Вернуться к списку
         </Link>
@@ -183,7 +227,6 @@ export default function TaskDetailPage({ params }) {
     );
   }
 
-  // Проверка права смены постановщика
   const canChangeManager =
     session?.user?.role === 'admin' || session?.user?.id === task.manager?._id;
 
@@ -193,9 +236,9 @@ export default function TaskDetailPage({ params }) {
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/tasks"
-          className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+          className="text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
         >
-          ← Назад к заявкам
+          ← Назад к задачам
         </Link>
         <div className="flex items-center gap-2">
           {!isEditing ? (
@@ -228,25 +271,25 @@ export default function TaskDetailPage({ params }) {
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 text-xs bg-red-50 text-red-600 rounded-xl border border-red-100">
+        <div className="p-3.5 text-sm bg-red-50 text-red-600 rounded-xl border border-red-100">
           {errorMessage}
         </div>
       )}
 
       {/* Основная карточка */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Левая часть: Заголовок, описание, комментарии */}
+        {/* Левая часть: Тема, описание, комментарии */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
             {isEditing ? (
               <form
                 id="task-edit-form"
                 onSubmit={handleSave}
-                className="space-y-4"
+                className="space-y-4 text-sm"
               >
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-500 mb-1">
-                    Тема заявки
+                    Тема задачи *
                   </label>
                   <input
                     type="text"
@@ -309,9 +352,9 @@ export default function TaskDetailPage({ params }) {
             </h3>
 
             {isEditing ? (
-              <div className="space-y-4 text-xs">
+              <div className="space-y-4 text-sm">
                 <div>
-                  <label className="block font-semibold text-slate-600 mb-1">
+                  <label className="block font-semibold text-slate-600 mb-1 text-xs uppercase">
                     Статус
                   </label>
                   <select
@@ -319,7 +362,7 @@ export default function TaskDetailPage({ params }) {
                     onChange={(e) =>
                       setFormData({ ...formData, status: e.target.value })
                     }
-                    className="w-full rounded-lg border border-slate-300 p-2 bg-white"
+                    className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-sm"
                   >
                     <option value="Открыта">Открыта</option>
                     <option value="В работе">В работе</option>
@@ -330,7 +373,7 @@ export default function TaskDetailPage({ params }) {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-600 mb-1">
+                  <label className="block font-semibold text-slate-600 mb-1 text-xs uppercase">
                     Организация
                   </label>
                   <select
@@ -338,7 +381,7 @@ export default function TaskDetailPage({ params }) {
                     onChange={(e) =>
                       setFormData({ ...formData, company: e.target.value })
                     }
-                    className="w-full rounded-lg border border-slate-300 p-2 bg-white"
+                    className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-sm"
                   >
                     {organizations.map((org) => (
                       <option key={org._id} value={org.title}>
@@ -349,26 +392,31 @@ export default function TaskDetailPage({ params }) {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-600 mb-1">
-                    Исполнитель
+                  <label className="block font-semibold text-slate-600 mb-1 text-xs uppercase">
+                    Исполнители *
                   </label>
-                  <select
-                    value={formData.executor}
-                    onChange={(e) =>
-                      setFormData({ ...formData, executor: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-slate-300 p-2 bg-white"
-                  >
+                  <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1">
                     {users.map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name}
-                      </option>
+                      <label
+                        key={u._id}
+                        className="flex items-center gap-2 p-1.5 rounded hover:bg-slate-50 cursor-pointer text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.executors?.includes(u._id)}
+                          onChange={() => toggleExecutorEdit(u._id)}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                        />
+                        <span className="text-slate-800 font-medium">
+                          {u.name}
+                        </span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-600 mb-1">
+                  <label className="block font-semibold text-slate-600 mb-1 text-xs uppercase">
                     Постановщик
                   </label>
                   <select
@@ -377,7 +425,11 @@ export default function TaskDetailPage({ params }) {
                     onChange={(e) =>
                       setFormData({ ...formData, manager: e.target.value })
                     }
-                    className={`w-full rounded-lg border border-slate-300 p-2 bg-white ${!canChangeManager ? 'bg-slate-100 cursor-not-allowed text-slate-400' : ''}`}
+                    className={`w-full rounded-lg border border-slate-300 p-2.5 bg-white text-sm ${
+                      !canChangeManager
+                        ? 'bg-slate-100 cursor-not-allowed text-slate-400'
+                        : ''
+                    }`}
                   >
                     {users.map((u) => (
                       <option key={u._id} value={u._id}>
@@ -386,14 +438,14 @@ export default function TaskDetailPage({ params }) {
                     ))}
                   </select>
                   {!canChangeManager && (
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    <span className="text-xs text-slate-400 mt-1 block">
                       Меняет только постановщик
                     </span>
                   )}
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-600 mb-1">
+                  <label className="block font-semibold text-slate-600 mb-1 text-xs uppercase">
                     Дедлайн
                   </label>
                   <input
@@ -402,7 +454,7 @@ export default function TaskDetailPage({ params }) {
                     onChange={(e) =>
                       setFormData({ ...formData, todoDeadline: e.target.value })
                     }
-                    className="w-full rounded-lg border border-slate-300 p-2 bg-white"
+                    className="w-full rounded-lg border border-slate-300 p-2.5 bg-white text-sm"
                   />
                 </div>
 
@@ -418,15 +470,15 @@ export default function TaskDetailPage({ params }) {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4 text-xs">
+              <div className="space-y-4 text-sm">
                 <div>
-                  <span className="text-slate-400 block mb-1">
+                  <span className="text-slate-400 block mb-1 text-xs uppercase font-semibold">
                     Быстрая смена статуса
                   </span>
                   <select
                     value={task.status}
                     onChange={(e) => handleQuickStatusChange(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 p-2 text-xs font-semibold bg-white"
+                    className="w-full rounded-lg border border-slate-300 p-2.5 text-sm font-semibold bg-white"
                   >
                     <option value="Открыта">Открыта</option>
                     <option value="В работе">В работе</option>
@@ -436,27 +488,43 @@ export default function TaskDetailPage({ params }) {
                   </select>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 space-y-3">
+                <div className="pt-3 border-t border-slate-100 space-y-3">
                   <div>
-                    <span className="text-slate-400 block">Организация:</span>
+                    <span className="text-slate-400 text-xs block">
+                      Организация:
+                    </span>
                     <span className="font-semibold text-slate-800">
                       {task.company}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Исполнитель:</span>
-                    <span className="font-semibold text-slate-800">
-                      {task.executor?.name || '—'}
+                    <span className="text-slate-400 text-xs block">
+                      Исполнители:
                     </span>
+                    <div className="font-semibold text-slate-800 space-y-0.5 mt-0.5">
+                      {task.executors?.length > 0 ? (
+                        task.executors.map((e) => (
+                          <div key={e._id}>{e.name}</div>
+                        ))
+                      ) : (
+                        <span className="text-slate-400 font-normal">
+                          Не назначены
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Постановщик:</span>
+                    <span className="text-slate-400 text-xs block">
+                      Постановщик:
+                    </span>
                     <span className="font-semibold text-slate-800">
                       {task.manager?.name || '—'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Дедлайн:</span>
+                    <span className="text-slate-400 text-xs block">
+                      Дедлайн:
+                    </span>
                     <span className="font-semibold text-slate-800">
                       {task.todoDeadline
                         ? new Date(task.todoDeadline).toLocaleDateString(
@@ -466,14 +534,18 @@ export default function TaskDetailPage({ params }) {
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Дата создания:</span>
-                    <span className="text-slate-600">
+                    <span className="text-slate-400 text-xs block">
+                      Дата создания:
+                    </span>
+                    <span className="text-slate-600 text-xs">
                       {new Date(task.createdAt).toLocaleString('ru-RU')}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block">Обновлено:</span>
-                    <span className="text-slate-600">
+                    <span className="text-slate-400 text-xs block">
+                      Обновлено:
+                    </span>
+                    <span className="text-slate-600 text-xs">
                       {new Date(task.updatedAt).toLocaleString('ru-RU')}
                     </span>
                   </div>
@@ -484,13 +556,12 @@ export default function TaskDetailPage({ params }) {
         </div>
       </div>
 
-      {/* Модальное окно подтверждения удаления */}
       <ConfirmModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
-        title="Удалить заявку?"
-        message="Заявка будет помещена в корзину (мягкое удаление) и перестанет отображаться в списках."
+        title="Удалить задачу?"
+        message="Задача будет помещена в корзину (мягкое удаление) и перестанет отображаться в списках."
       />
     </div>
   );

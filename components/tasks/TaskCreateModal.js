@@ -12,15 +12,25 @@ export default function TaskCreateModal({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [company, setCompany] = useState('');
-  const [executor, setExecutor] = useState('');
+  const [executors, setExecutors] = useState([]);
   const [todoDeadline, setTodoDeadline] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const toggleExecutor = (userId) => {
+    setExecutors((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim() || !company || !executor) {
-      setError('Заполните обязательные поля');
+    if (!title.trim() || !company || executors.length === 0) {
+      setError(
+        'Заполните обязательные поля и выберите хотя бы одного исполнителя',
+      );
       return;
     }
 
@@ -35,7 +45,7 @@ export default function TaskCreateModal({
           title,
           description,
           company,
-          executor,
+          executors,
           todoDeadline: todoDeadline || null,
         }),
       });
@@ -48,7 +58,7 @@ export default function TaskCreateModal({
       setTitle('');
       setDescription('');
       setCompany('');
-      setExecutor('');
+      setExecutors([]);
       setTodoDeadline('');
       onCreated();
       onClose();
@@ -63,19 +73,19 @@ export default function TaskCreateModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Новая заявка"
+      title="Новая задача"
       maxWidth="max-w-xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
         {error && (
-          <div className="p-3 text-xs bg-red-50 text-red-600 rounded-lg border border-red-100">
+          <div className="p-3 text-sm bg-red-50 text-red-600 rounded-lg border border-red-100">
             {error}
           </div>
         )}
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-            Тема заявки *
+            Тема задачи *
           </label>
           <input
             type="text"
@@ -87,7 +97,7 @@ export default function TaskCreateModal({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
               Организация *
@@ -95,7 +105,7 @@ export default function TaskCreateModal({
             <select
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
+              className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 bg-white"
               required
             >
               <option value="">Выберите организацию</option>
@@ -109,34 +119,38 @@ export default function TaskCreateModal({
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-              Исполнитель *
+              Дедлайн
             </label>
-            <select
-              value={executor}
-              onChange={(e) => setExecutor(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
-              required
-            >
-              <option value="">Назначить исполнителя</option>
-              {users.map((u) => (
-                <option key={u._id} value={u._id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
+            <input
+              type="date"
+              value={todoDeadline}
+              onChange={(e) => setTodoDeadline(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 bg-white"
+            />
           </div>
         </div>
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-            Дедлайн
+            Исполнители * (можно выбрать нескольких)
           </label>
-          <input
-            type="date"
-            value={todoDeadline}
-            onChange={(e) => setTodoDeadline(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
-          />
+          <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1">
+            {users.map((u) => (
+              <label
+                key={u._id}
+                className="flex items-center gap-2 p-1.5 rounded hover:bg-slate-50 cursor-pointer text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={executors.includes(u._id)}
+                  onChange={() => toggleExecutor(u._id)}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                />
+                <span className="text-slate-800 font-medium">{u.name}</span>
+                <span className="text-xs text-slate-400">({u.email})</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         <div>
@@ -147,8 +161,8 @@ export default function TaskCreateModal({
             rows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            placeholder="Подробности, адрес, контактное лицо..."
+            className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500"
+            placeholder="Подробности задачи, контакты, адрес..."
           />
         </div>
 
@@ -162,7 +176,7 @@ export default function TaskCreateModal({
             Отмена
           </Button>
           <Button variant="primary" type="submit" disabled={loading}>
-            {loading ? 'Создание...' : 'Создать заявку'}
+            {loading ? 'Создание...' : 'Создать задачу'}
           </Button>
         </div>
       </form>

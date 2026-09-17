@@ -73,21 +73,29 @@ export default function BackupsPage() {
     if (!date) return <span className="text-slate-400">—</span>;
 
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
     const checked = new Date(date);
-    const diffDays = Math.floor((now - checked) / (1000 * 60 * 60 * 24));
+    checked.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((now - checked) / (1000 * 60 * 60 * 24));
 
     if (diffDays >= 7) {
       return (
-        <span className="text-red-600 font-bold flex items-center gap-1">
-          {checked.toLocaleDateString('ru-RU')}
-          <span className="text-[10px] px-1.5 py-0.2 rounded bg-red-100 border border-red-200">
-            {diffDays}д назад
+        <span className="text-red-600 font-bold flex items-center gap-1.5 text-sm">
+          {new Date(date).toLocaleDateString('ru-RU')}
+          <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 border border-red-200">
+            {diffDays} дн. назад
           </span>
         </span>
       );
     }
 
-    return <span>{checked.toLocaleDateString('ru-RU')}</span>;
+    return (
+      <span className="text-sm text-slate-700">
+        {new Date(date).toLocaleDateString('ru-RU')}
+      </span>
+    );
   };
 
   const getStatusBadge = (status) => {

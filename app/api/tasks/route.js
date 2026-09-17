@@ -22,7 +22,12 @@ export async function GET(req) {
 
   const filter = { isDeleted: false };
 
-  // Фильтр архива: на обычном дашборде архив скрыт
+  // Ограничение прав: обычные сотрудники видят только задачи, где они постановщик или входят в executors
+  if (session.user.role !== 'admin') {
+    filter.$or = [{ manager: session.user.id }, { executors: session.user.id }];
+  }
+
+  // Фильтр архива
   if (isArchive) {
     filter.status = 'Архив';
   } else if (status) {
@@ -32,20 +37,38 @@ export async function GET(req) {
   }
 
   if (company) filter.company = company;
-  if (executor) filter.executor = executor;
   if (manager) filter.manager = manager;
 
+  // Фильтр по исполнителю из выпадающего списка
+  if (executor) {
+    if (filter.$or) {
+      filter.$and = [{ $or: filter.$or }, { executors: executor }];
+      delete filter.$or;
+    } else {
+      filter.executors = executor;
+    }
+  }
+
   if (search.trim()) {
-    filter.$or = [
+    const searchConditions = [
       { title: { $regex: search.trim(), $options: 'i' } },
       { description: { $regex: search.trim(), $options: 'i' } },
       { 'comments.text': { $regex: search.trim(), $options: 'i' } },
     ];
+
+    if (filter.$and) {
+      filter.$and.push({ $or: searchConditions });
+    } else if (filter.$or) {
+      filter.$and = [{ $or: filter.$or }, { $or: searchConditions }];
+      delete filter.$or;
+    } else {
+      filter.$or = searchConditions;
+    }
   }
 
   const tasks = await Task.find(filter)
     .populate('manager', 'name email')
-    .populate('executor', 'name email')
+    .populate('executors', 'name email')
     .sort({ createdAt: -1 });
 
   return NextResponse.json(tasks);
@@ -58,12 +81,15 @@ export async function POST(req) {
   }
 
   try {
-    const { title, description, company, executor, todoDeadline } =
+    const { title, description, company, executors, todoDeadline } =
       await req.json();
 
-    if (!title || !company || !executor) {
+    if (!title || !company || !executors || executors.length === 0) {
       return NextResponse.json(
-        { error: 'Заполните обязательные поля' },
+        {
+          error:
+            'Заполните обязательные поля и укажите хотя бы одного исполнителя',
+        },
         { status: 400 },
       );
     }
@@ -74,7 +100,7 @@ export async function POST(req) {
       title: title.trim(),
       description: description || '',
       company: company.trim(),
-      executor,
+      executors: Array.isArray(executors) ? executors : [executors],
       manager: session.user.id,
       todoDeadline: todoDeadline ? new Date(todoDeadline) : null,
       status: 'Открыта',
@@ -82,7 +108,7 @@ export async function POST(req) {
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
-    console.error('Ошибка создания заявки:', error);
+    console.error('Ошибка создания задачи:', error);
     return NextResponse.json(
       { error: 'Внутренняя ошибка сервера' },
       { status: 500 },

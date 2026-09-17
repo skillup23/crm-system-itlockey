@@ -4,7 +4,6 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectMongo from '@/lib/mongodb';
 import Task from '@/models/Task';
 
-// Получение информации по задаче
 export async function GET(req, { params }) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -16,16 +15,27 @@ export async function GET(req, { params }) {
 
   const task = await Task.findOne({ _id: id, isDeleted: false })
     .populate('manager', 'name email')
-    .populate('executor', 'name email');
+    .populate('executors', 'name email');
 
   if (!task) {
-    return NextResponse.json({ error: 'Заявка не найдена' }, { status: 404 });
+    return NextResponse.json({ error: 'Задача не найдена' }, { status: 404 });
+  }
+
+  const isAdmin = session.user.role === 'admin';
+  const isManager =
+    String(task.manager?._id || task.manager) === session.user.id;
+  const isExecutor = task.executors?.some(
+    (u) => String(u._id || u) === session.user.id,
+  );
+
+  // Доступ закрыт, если не админ, не постановщик и не один из исполнителей
+  if (!isAdmin && !isManager && !isExecutor) {
+    return NextResponse.json({ error: 'Доступ закрыт' }, { status: 403 });
   }
 
   return NextResponse.json(task);
 }
 
-// Обновление задачи (редактирование, смена статуса)
 export async function PUT(req, { params }) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -39,13 +49,20 @@ export async function PUT(req, { params }) {
   const task = await Task.findOne({ _id: id, isDeleted: false });
 
   if (!task) {
-    return NextResponse.json({ error: 'Заявка не найдена' }, { status: 404 });
+    return NextResponse.json({ error: 'Задача не найдена' }, { status: 404 });
   }
 
   const isAdmin = session.user.role === 'admin';
   const isManager = String(task.manager) === session.user.id;
+  const isExecutor = task.executors?.some((u) => String(u) === session.user.id);
 
-  // Менять постановщика разрешено только текущему постановщику или админу
+  if (!isAdmin && !isManager && !isExecutor) {
+    return NextResponse.json(
+      { error: 'Нет доступа к редактированию' },
+      { status: 403 },
+    );
+  }
+
   if (body.manager && String(body.manager) !== String(task.manager)) {
     if (!isAdmin && !isManager) {
       return NextResponse.json(
@@ -59,7 +76,7 @@ export async function PUT(req, { params }) {
   if (body.title !== undefined) task.title = body.title.trim();
   if (body.description !== undefined) task.description = body.description;
   if (body.company !== undefined) task.company = body.company;
-  if (body.executor !== undefined) task.executor = body.executor;
+  if (body.executors !== undefined) task.executors = body.executors;
   if (body.status !== undefined) task.status = body.status;
   if (body.todoDeadline !== undefined) {
     task.todoDeadline = body.todoDeadline ? new Date(body.todoDeadline) : null;
@@ -69,12 +86,11 @@ export async function PUT(req, { params }) {
 
   const updatedTask = await Task.findById(id)
     .populate('manager', 'name email')
-    .populate('executor', 'name email');
+    .populate('executors', 'name email');
 
   return NextResponse.json(updatedTask);
 }
 
-// Мягкое удаление (isDeleted: true)
 export async function DELETE(req, { params }) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -86,7 +102,17 @@ export async function DELETE(req, { params }) {
 
   const task = await Task.findById(id);
   if (!task) {
-    return NextResponse.json({ error: 'Заявка не найдена' }, { status: 404 });
+    return NextResponse.json({ error: 'Задача не найдена' }, { status: 404 });
+  }
+
+  const isAdmin = session.user.role === 'admin';
+  const isManager = String(task.manager) === session.user.id;
+
+  if (!isAdmin && !isManager) {
+    return NextResponse.json(
+      { error: 'Удалять задачу может только постановщик или администратор' },
+      { status: 403 },
+    );
   }
 
   task.isDeleted = true;

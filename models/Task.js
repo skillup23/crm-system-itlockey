@@ -23,18 +23,13 @@ const TaskSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     }, // Постановщик
-    executor: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    }, // Исполнитель
+    executors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Массив исполнителей
     comments: [CommentSchema],
     isDeleted: { type: Boolean, default: false }, // Soft delete
   },
   { timestamps: true },
 );
 
-// Текстовый индекс для поиска по заголовку и описанию
 TaskSchema.index({ title: 'text', description: 'text' });
 
 export default mongoose.models.Task || mongoose.model('Task', TaskSchema);

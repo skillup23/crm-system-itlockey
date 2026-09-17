@@ -14,7 +14,7 @@ export async function GET() {
   await connectMongo();
   const deletedTasks = await Task.find({ isDeleted: true })
     .populate('manager', 'name email')
-    .populate('executor', 'name email')
+    .populate('executors', 'name email')
     .sort({ updatedAt: -1 });
 
   return NextResponse.json(deletedTasks);

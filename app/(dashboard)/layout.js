@@ -1,16 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
     { name: 'Дашборд', href: '/' },
-    { name: 'Заявки', href: '/tasks' },
+    { name: 'Задачи', href: '/tasks' },
     { name: 'Организации', href: '/organizations' },
     ...(session?.user?.role === 'admin'
       ? [{ name: 'Сотрудники', href: '/users' }]
@@ -20,25 +22,33 @@ export default function DashboardLayout({ children }) {
     { name: 'Бэкапы', href: '/backups' },
   ];
 
+  const handleLogout = () => {
+    signOut({ redirect: true, callbackUrl: '/login' });
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
-      {/* Боковая панель */}
-      <aside className="w-64 bg-slate-900 text-slate-200 hidden md:flex flex-col border-r border-slate-800">
-        <div className="h-16 flex items-center px-6 border-b border-slate-800">
-          <div className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+    <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
+      {/* Десктопный Sidebar */}
+      <aside className="hidden md:flex md:w-64 flex-col bg-slate-900 text-white shadow-xl">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <span className="text-lg font-black tracking-wider text-blue-400">
             IT CRM
-          </div>
+          </span>
+          <span className="text-[11px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded uppercase font-semibold">
+            {session?.user?.role === 'admin' ? 'Admin' : 'Staff'}
+          </span>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
           {navigation.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href ||
+              (item.href !== '/' && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -50,63 +60,115 @@ export default function DashboardLayout({ children }) {
           })}
         </nav>
 
-        {/* Профиль внизу сайдбара */}
-        <div className="p-4 border-t border-slate-800 bg-slate-900/50">
-          <div className="flex items-center justify-between">
-            <div className="truncate pr-2">
-              <p className="text-sm font-semibold text-white truncate">
-                {session?.user?.name || 'Пользователь'}
-              </p>
-              <p className="text-xs text-slate-400 truncate">
-                {session?.user?.email}
-              </p>
-            </div>
-            <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="text-slate-400 hover:text-red-400 p-1.5 rounded-md hover:bg-slate-800 transition-colors"
-              title="Выйти"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-            </button>
+        <div className="p-4 border-t border-slate-800">
+          <div className="text-sm font-bold text-slate-200 truncate">
+            {session?.user?.name}
           </div>
+          <div className="text-xs text-slate-400 truncate mb-3">
+            {session?.user?.email}
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-red-600/80 text-slate-300 hover:text-white text-xs font-semibold transition-colors"
+          >
+            Выйти
+          </button>
         </div>
       </aside>
 
+      {/* Оверлей мобильного меню */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Выдвижное мобильное меню */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white flex flex-col transform transition-transform duration-300 ease-in-out md:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+          <span className="text-lg font-black text-blue-400">IT CRM</span>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-2 text-slate-400 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+
+        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
+          {navigation.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== '/' && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  isActive
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-slate-800">
+          <div className="text-sm font-bold text-slate-200 truncate">
+            {session?.user?.name}
+          </div>
+          <div className="text-xs text-slate-400 truncate mb-3">
+            {session?.user?.email}
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full py-2.5 px-3 rounded-lg bg-slate-800 text-red-400 text-xs font-semibold"
+          >
+            Выйти
+          </button>
+        </div>
+      </div>
+
       {/* Основная рабочая область */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Шапка для десктопа и мобилки */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10">
-          <div className="md:hidden font-bold text-slate-900 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-            IT CRM
-          </div>
-          <div className="hidden md:block">
-            <span className="text-sm text-slate-500">
-              Система учета заявок и сервисов
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-              {session?.user?.role === 'admin' ? 'Администратор' : 'Сотрудник'}
-            </span>
-          </div>
+        {/* Мобильный хедер с кнопкой бургера */}
+        <header className="md:hidden flex items-center justify-between bg-slate-900 text-white px-4 py-3 border-b border-slate-800">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-1.5 rounded-lg bg-slate-800 text-slate-200 focus:outline-none"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+          <span className="font-bold text-sm text-blue-400">IT CRM</span>
+          <span className="text-xs text-slate-400 truncate max-w-30">
+            {session?.user?.name}
+          </span>
         </header>
 
-        {/* Контент страницы */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
-          <div className="max-w-7xl mx-auto">{children}</div>
+        {/* Контейнер страниц с нужным отступом p-4 md:p-8 */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50">
+          {children}
         </main>
       </div>
     </div>
