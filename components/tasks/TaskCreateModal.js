@@ -55,6 +55,7 @@ export default function TaskCreateModal({
           description,
           company,
           executors,
+          observers,
           todoDeadline: todoDeadline || null,
         }),
       });
@@ -68,6 +69,7 @@ export default function TaskCreateModal({
       setDescription('');
       setCompany('');
       setExecutors([]);
+      setObservers([]);
       setTodoDeadline('');
       onCreated();
       onClose();
