@@ -16,9 +16,18 @@ export default function TaskCreateModal({
   const [todoDeadline, setTodoDeadline] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [observers, setObservers] = useState([]);
 
   const toggleExecutor = (userId) => {
     setExecutors((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
+    );
+  };
+
+  const toggleObserver = (userId) => {
+    setObservers((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
         : [...prev, userId],
@@ -134,7 +143,7 @@ export default function TaskCreateModal({
           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
             Исполнители
           </label>
-          <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1">
+          <div className="max-h-24 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1">
             {users.map((u) => (
               <label
                 key={u._id}
@@ -150,6 +159,28 @@ export default function TaskCreateModal({
                 <span className="text-xs text-slate-400 hidden">
                   ({u.email})
                 </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+            Наблюдатели
+          </label>
+          <div className="max-h-24 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1">
+            {users.map((u) => (
+              <label
+                key={u._id}
+                className="flex items-center gap-2 p-1.5 rounded hover:bg-slate-50 cursor-pointer text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={observers.includes(u._id)}
+                  onChange={() => toggleObserver(u._id)}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                />
+                <span className="text-slate-800 font-medium">{u.name}</span>
               </label>
             ))}
           </div>

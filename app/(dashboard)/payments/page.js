@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import PaymentFormModal from '@/components/payments/PaymentFormModal';
 
 export default function PaymentsPage() {
+  const { data: session } = useSession(); // получаем сессию, чтобы знать, админ ли это
+  const [showAll, setShowAll] = useState(false); // вот наше состояние для чекбокса
   const [payments, setPayments] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +24,7 @@ export default function PaymentsPage() {
   const fetchPayments = async () => {
     try {
       const [payRes, userRes] = await Promise.all([
-        fetch('/api/payments'),
+        fetch(`/api/payments?showAll=${showAll}`),
         fetch('/api/users'),
       ]);
       const payData = await payRes.json();
@@ -38,10 +41,11 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     let ignore = false;
+
     async function load() {
       try {
         const [payRes, userRes] = await Promise.all([
-          fetch('/api/payments'),
+          fetch(`/api/payments?showAll=${showAll}`),
           fetch('/api/users'),
         ]);
         const payData = await payRes.json();
@@ -56,11 +60,13 @@ export default function PaymentsPage() {
         if (!ignore) setLoading(false);
       }
     }
+
     load();
+
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [showAll]);
 
   const getNearestDate = (p) => {
     const dates = [];
@@ -162,6 +168,18 @@ export default function PaymentsPage() {
             <option value="domain">По имени домена</option>
           </select>
         </div>
+
+        {session?.user?.role === 'admin' && (
+          <label className="flex items-center gap-2 text-sm text-slate-700 font-semibold cursor-pointer select-none bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200/70 transition-colors">
+            <input
+              type="checkbox"
+              checked={showAll}
+              onChange={(e) => setShowAll(e.target.checked)}
+              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+            />
+            <span>Показать все</span>
+          </label>
+        )}
       </div>
 
       {/* Таблица платежей */}

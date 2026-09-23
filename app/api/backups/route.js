@@ -4,7 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectMongo from '@/lib/mongodb';
 import Backup from '@/models/Backup';
 
-export async function GET() {
+export async function GET(req) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
@@ -12,8 +12,12 @@ export async function GET() {
 
   await connectMongo();
 
+  const { searchParams } = new URL(req.url);
+  const showAll =
+    searchParams.get('showAll') === 'true' && session.user.role === 'admin';
+
   const filter = {};
-  if (session.user.role !== 'admin') {
+  if (!showAll) {
     filter.$or = [
       { author: session.user.id },
       { allowedUsers: session.user.id },

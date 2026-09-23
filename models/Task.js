@@ -22,10 +22,11 @@ const TaskSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-    }, // Постановщик
-    executors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Массив исполнителей
+    }, // Постановщик задачи
+    executors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Исполнители
+    observers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Наблюдатели
     comments: [CommentSchema],
-    isDeleted: { type: Boolean, default: false }, // Soft delete
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

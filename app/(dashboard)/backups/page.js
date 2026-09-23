@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import BackupFormModal from '@/components/backups/BackupFormModal';
 
 export default function BackupsPage() {
+  const { data: session } = useSession(); // получаем сессию, чтобы знать, админ ли это
+  const [showAll, setShowAll] = useState(false);
+
   const [backups, setBackups] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +22,7 @@ export default function BackupsPage() {
   const fetchBackups = async () => {
     try {
       const [bRes, uRes] = await Promise.all([
-        fetch('/api/backups'),
+        fetch(`/api/backups?showAll=${showAll}`),
         fetch('/api/users'),
       ]);
       const bData = await bRes.json();
@@ -35,10 +39,11 @@ export default function BackupsPage() {
 
   useEffect(() => {
     let ignore = false;
+
     async function load() {
       try {
         const [bRes, uRes] = await Promise.all([
-          fetch('/api/backups'),
+          fetch(`/api/backups?showAll=${showAll}`),
           fetch('/api/users'),
         ]);
         const bData = await bRes.json();
@@ -53,11 +58,13 @@ export default function BackupsPage() {
         if (!ignore) setLoading(false);
       }
     }
+
     load();
+
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [showAll]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -149,6 +156,18 @@ export default function BackupsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full sm:w-80 rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500"
         />
+
+        {session?.user?.role === 'admin' && (
+          <label className="flex items-center gap-2 text-sm text-slate-700 font-semibold cursor-pointer select-none bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200/70 transition-colors">
+            <input
+              type="checkbox"
+              checked={showAll}
+              onChange={(e) => setShowAll(e.target.checked)}
+              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+            />
+            <span>Показать все</span>
+          </label>
+        )}
       </div>
 
       {/* Таблица серверов и бэкапов */}

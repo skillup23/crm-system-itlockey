@@ -5,7 +5,7 @@ import connectMongo from '@/lib/mongodb';
 import Organization from '@/models/Organization';
 
 // Получение списка организаций
-export async function GET() {
+export async function GET(req) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
@@ -13,12 +13,18 @@ export async function GET() {
 
   await connectMongo();
 
-  let filter = {};
-  if (session.user.role !== 'admin') {
-    // Обычный пользователь видит созданные им или те, куда ему открыт доступ
-    filter = {
-      $or: [{ allowedUsers: session.user.id }, { createdBy: session.user.id }],
-    };
+  const { searchParams } = new URL(req.url);
+  const showAll =
+    searchParams.get('showAll') === 'true' && session.user.role === 'admin';
+
+  const filter = {};
+  if (!showAll) {
+    // Видно только где пользователь указан в allowedUsers (или где список пуст)
+    filter.$or = [
+      { allowedUsers: session.user.id },
+      { allowedUsers: { $size: 0 } },
+      { allowedUsers: { $exists: false } },
+    ];
   }
 
   const organizations = await Organization.find(filter)

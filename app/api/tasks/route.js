@@ -19,12 +19,20 @@ export async function GET(req) {
   const executor = searchParams.get('executor') || '';
   const manager = searchParams.get('manager') || '';
   const isArchive = searchParams.get('archive') === 'true';
+  const showAll =
+    searchParams.get('showAll') === 'true' && session.user.role === 'admin';
 
   const filter = { isDeleted: false };
 
   // Ограничение прав: обычные сотрудники видят только задачи, где они постановщик или входят в executors
-  if (session.user.role !== 'admin') {
-    filter.$or = [{ manager: session.user.id }, { executors: session.user.id }];
+  // Если не админ с включенным showAll, показываем только связанные задачи:
+  // где пользователь менеджер, исполнитель или наблюдатель
+  if (!showAll) {
+    filter.$or = [
+      { manager: session.user.id },
+      { executors: session.user.id },
+      { observers: session.user.id },
+    ];
   }
 
   // Фильтр архива
@@ -69,6 +77,7 @@ export async function GET(req) {
   const tasks = await Task.find(filter)
     .populate('manager', 'name email')
     .populate('executors', 'name email')
+    .populate('observers', 'name email')
     .sort({ createdAt: -1 });
 
   return NextResponse.json(tasks);
@@ -101,6 +110,7 @@ export async function POST(req) {
       description: description || '',
       company: company.trim(),
       executors: Array.isArray(executors) ? executors : [executors],
+      observers: Array.isArray(observers) ? observers : [],
       manager: session.user.id,
       todoDeadline: todoDeadline ? new Date(todoDeadline) : null,
       status: 'Открыта',

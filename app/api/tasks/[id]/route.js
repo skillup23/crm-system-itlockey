@@ -15,11 +15,11 @@ export async function GET(req, { params }) {
 
   const task = await Task.findOne({ _id: id, isDeleted: false })
     .populate('manager', 'name email')
-    .populate('executors', 'name email');
+    .populate('executors', 'name email')
+    .populate('observers', 'name email');
 
-  if (!task) {
+  if (!task)
     return NextResponse.json({ error: 'Задача не найдена' }, { status: 404 });
-  }
 
   const isAdmin = session.user.role === 'admin';
   const isManager =
@@ -27,9 +27,12 @@ export async function GET(req, { params }) {
   const isExecutor = task.executors?.some(
     (u) => String(u._id || u) === session.user.id,
   );
+  const isObserver = task.observers?.some(
+    (u) => String(u._id || u) === session.user.id,
+  );
 
   // Доступ закрыт, если не админ, не постановщик и не один из исполнителей
-  if (!isAdmin && !isManager && !isExecutor) {
+  if (!isAdmin && !isManager && !isExecutor && !isObserver) {
     return NextResponse.json({ error: 'Доступ закрыт' }, { status: 403 });
   }
 
@@ -55,8 +58,8 @@ export async function PUT(req, { params }) {
   const isAdmin = session.user.role === 'admin';
   const isManager = String(task.manager) === session.user.id;
   const isExecutor = task.executors?.some((u) => String(u) === session.user.id);
-
-  if (!isAdmin && !isManager && !isExecutor) {
+  const isObserver = task.observers?.some((u) => String(u) === session.user.id);
+  if (!isAdmin && !isManager && !isExecutor && !isObserver) {
     return NextResponse.json(
       { error: 'Нет доступа к редактированию' },
       { status: 403 },
@@ -86,7 +89,8 @@ export async function PUT(req, { params }) {
 
   const updatedTask = await Task.findById(id)
     .populate('manager', 'name email')
-    .populate('executors', 'name email');
+    .populate('executors', 'name email')
+    .populate('observers', 'name email');
 
   return NextResponse.json(updatedTask);
 }

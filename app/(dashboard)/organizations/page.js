@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Button from '@/components/ui/Button';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import OrganizationFormModal from '@/components/organizations/OrganizationFormModal';
 
 export default function OrganizationsPage() {
+  const { data: session } = useSession(); // получаем сессию, чтобы знать, админ ли это
+  const [showAll, setShowAll] = useState(false);
+
   const [organizations, setOrganizations] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +24,7 @@ export default function OrganizationsPage() {
   const fetchData = async () => {
     try {
       const [orgRes, userRes] = await Promise.all([
-        fetch('/api/organizations'),
+        fetch(`/api/organizations?showAll=${showAll}`),
         fetch('/api/users'),
       ]);
       const orgData = await orgRes.json();
@@ -41,7 +45,7 @@ export default function OrganizationsPage() {
     async function load() {
       try {
         const [orgRes, userRes] = await Promise.all([
-          fetch('/api/organizations'),
+          fetch(`/api/organizations?showAll=${showAll}`),
           fetch('/api/users'),
         ]);
         const orgData = await orgRes.json();
@@ -65,7 +69,7 @@ export default function OrganizationsPage() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [showAll]);
 
   const openCreateModal = () => {
     setEditingOrg(null);
@@ -130,7 +134,20 @@ export default function OrganizationsPage() {
             Учет обслуживаемых компаний и назначение доступов сотрудникам
           </p>
         </div>
-        <Button onClick={openCreateModal}>+ Добавить организацию</Button>
+        <div className="flex items-center gap-4">
+          {session?.user?.role === 'admin' && (
+            <label className="ml-auto flex items-center gap-2 text-sm text-slate-700 font-semibold cursor-pointer select-none bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200/70 transition-colors">
+              <input
+                type="checkbox"
+                checked={showAll}
+                onChange={(e) => setShowAll(e.target.checked)}
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+              />
+              <span>Показать все</span>
+            </label>
+          )}
+          <Button onClick={openCreateModal}>+ Добавить организацию</Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

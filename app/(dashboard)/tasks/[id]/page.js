@@ -58,6 +58,7 @@ export default function TaskDetailPage({ params }) {
         todoDeadline: taskData.todoDeadline
           ? taskData.todoDeadline.substring(0, 10)
           : '',
+        observers: taskData.observers?.map((u) => u._id || u) || [],
       });
     } catch (err) {
       console.error(err);
@@ -119,6 +120,16 @@ export default function TaskDetailPage({ params }) {
       ignore = true;
     };
   }, [id]);
+
+  const toggleObserverEdit = (userId) => {
+    setFormData((prev) => {
+      const current = prev.observers || [];
+      const updated = current.includes(userId)
+        ? current.filter((uid) => uid !== userId)
+        : [...current, userId];
+      return { ...prev, observers: updated };
+    });
+  };
 
   const toggleExecutorEdit = (userId) => {
     setFormData((prev) => {
@@ -442,6 +453,21 @@ export default function TaskDetailPage({ params }) {
                       Меняет только постановщик
                     </span>
                   )}
+                </div>
+
+                <div>
+                  <span className="text-slate-400 text-xs block">
+                    Наблюдатели:
+                  </span>
+                  <div className="font-semibold text-slate-800 space-y-0.5 mt-0.5">
+                    {task.observers?.length > 0 ? (
+                      task.observers.map((o) => <div key={o._id}>{o.name}</div>)
+                    ) : (
+                      <span className="text-slate-400 font-normal">
+                        Не назначены
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div>

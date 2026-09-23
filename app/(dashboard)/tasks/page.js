@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TaskCreateModal from '@/components/tasks/TaskCreateModal';
 
 export default function TasksPage() {
+  const { data: session } = useSession(); // получаем сессию, чтобы знать, админ ли это
+  const [showAll, setShowAll] = useState(false); // вот наше состояние для чекбокса
   const [tasks, setTasks] = useState([]);
   const [organizations, setOrganizations] = useState([]);
   const [users, setUsers] = useState([]);
@@ -80,6 +83,7 @@ export default function TasksPage() {
         if (executor) params.set('executor', executor);
         if (manager) params.set('manager', manager);
         if (isArchive) params.set('archive', 'true');
+        if (showAll) params.set('showAll', 'true');
 
         const res = await fetch(`/api/tasks?${params.toString()}`);
         const data = await res.json();
@@ -96,7 +100,7 @@ export default function TasksPage() {
     return () => {
       ignore = true;
     };
-  }, [search, status, company, executor, manager, isArchive]);
+  }, [search, status, company, executor, manager, isArchive, showAll]);
 
   // Функция определения дедлайна для цветовой подсветки
   const getDeadlineStatus = (deadline, taskStatus) => {
@@ -166,7 +170,7 @@ export default function TasksPage() {
 
       {/* Блок фильтров и поиска */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
           <input
             type="text"
             placeholder="Поиск по теме, тексту, комментариям..."
@@ -214,6 +218,18 @@ export default function TasksPage() {
               </option>
             ))}
           </select>
+
+          {session?.user?.role === 'admin' && (
+            <label className="flex items-center gap-2 text-sm text-slate-700 font-semibold cursor-pointer select-none bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200/70 transition-colors">
+              <input
+                type="checkbox"
+                checked={showAll}
+                onChange={(e) => setShowAll(e.target.checked)}
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+              />
+              <span>Показать все</span>
+            </label>
+          )}
         </div>
       </div>
 
