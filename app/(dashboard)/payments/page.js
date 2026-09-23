@@ -179,11 +179,17 @@ export default function PaymentsPage() {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/75 font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="px-5 py-3.5">Доменное имя</th>
-                  <th className="px-5 py-3.5">Регистратор / Срок</th>
-                  <th className="px-5 py-3.5">Хостинг / Срок</th>
-                  <th className="px-5 py-3.5">Автор</th>
-                  <th className="px-5 py-3.5 text-right">Действия</th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">Доменное имя</th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">
+                    Регистратор / Срок
+                  </th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">
+                    Хостинг / Срок
+                  </th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">Автор</th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5 text-right">
+                    Действия
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -192,23 +198,23 @@ export default function PaymentsPage() {
                     key={item._id}
                     className="hover:bg-slate-50/50 transition-colors"
                   >
-                    <td className="px-5 py-3.5 font-bold text-slate-900 text-base">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 font-bold text-slate-900 text-base">
                       {item.domen}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600 text-base">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-base">
                       <div>{item.registrator || '—'}</div>
                       <div className="mt-1">{getDateBadge(item.datedomen)}</div>
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600 text-base">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-base">
                       <div>{item.hosting || '—'}</div>
                       <div className="mt-1">
                         {getDateBadge(item.datehosting)}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-slate-500 text-base">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-500 text-base">
                       {item.author?.name || '—'}
                     </td>
-                    <td className="px-5 py-3.5 text-right space-x-2 whitespace-nowrap">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-right space-x-2 whitespace-nowrap">
                       <button
                         onClick={() => {
                           setEditingPayment(item);

@@ -28,7 +28,7 @@ export default function OrganizationFormModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            placeholder="Например: АЗС или ООО Новация"
+            placeholder="Например: ООО Ромашка"
             required
           />
         </div>
@@ -50,7 +50,9 @@ export default function OrganizationFormModal({
                   className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                 />
                 <span className="text-slate-800 font-medium">{u.name}</span>
-                <span className="text-slate-400 text-xs">({u.email})</span>
+                <span className="text-slate-400 text-xs hidden">
+                  ({u.email})
+                </span>
               </label>
             ))}
           </div>

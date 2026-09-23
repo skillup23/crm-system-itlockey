@@ -166,12 +166,16 @@ export default function BackupsPage() {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/75 font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="px-5 py-3.5">Сервер / Ресурс</th>
-                  <th className="px-5 py-3.5">Статус</th>
-                  <th className="px-5 py-3.5">Дата проверки</th>
-                  <th className="px-5 py-3.5">Дата бэкапа</th>
-                  <th className="px-5 py-3.5">Комментарий</th>
-                  <th className="px-5 py-3.5 text-right">Действия</th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">
+                    Сервер / Ресурс
+                  </th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">Статус</th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">Дата проверки</th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">Дата бэкапа</th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5">Комментарий</th>
+                  <th className="px-3 sm:px-5 py-2 sm:py-3.5 text-right">
+                    Действия
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -180,37 +184,37 @@ export default function BackupsPage() {
                     key={item._id}
                     className="hover:bg-slate-50/50 transition-colors"
                   >
-                    <td className="px-5 py-3.5 font-bold text-slate-900 text-base">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 font-bold text-slate-900 text-sm">
                       {item.server}
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5">
                       {getStatusBadge(item.status)}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600 text-base">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-sm">
                       {getCheckDateBadge(item.checkDate)}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600 text-base">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-sm">
                       {new Date(item.backupDate).toLocaleDateString('ru-RU')}
                     </td>
                     <td
-                      className="px-5 py-3.5 text-slate-600 max-w-xs truncate"
+                      className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 max-w-xs truncate"
                       title={item.comment}
                     >
                       {item.comment || '—'}
                     </td>
-                    <td className="px-5 py-3.5 text-right space-x-2 whitespace-nowrap">
+                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-right space-x-2 whitespace-nowrap">
                       <button
                         onClick={() => {
                           setEditingBackup(item);
                           setIsModalOpen(true);
                         }}
-                        className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-base"
+                        className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm"
                       >
                         Изменить
                       </button>
                       <button
                         onClick={() => setDeleteId(item._id)}
-                        className="text-red-500 hover:text-red-700 font-medium transition-colors text-base"
+                        className="text-red-500 hover:text-red-700 font-medium transition-colors text-sm"
                       >
                         Удалить
                       </button>

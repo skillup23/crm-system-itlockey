@@ -94,7 +94,7 @@ export default function ArticleViewPage({ params }) {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-8 shadow-sm space-y-6">
         <div className="border-b border-slate-100 pb-5 space-y-2">
           <span className="inline-block px-2.5 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-semibold uppercase tracking-wider">
             {article.group}

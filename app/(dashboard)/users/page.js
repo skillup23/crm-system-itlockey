@@ -113,11 +113,13 @@ export default function UsersPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="px-6 py-4">Сотрудник</th>
-                  <th className="px-6 py-4">Email</th>
-                  <th className="px-6 py-4">Роль</th>
-                  <th className="px-6 py-4">Статус</th>
-                  <th className="px-6 py-4 text-right">Действия</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4">Сотрудник</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4">Email</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4">Роль</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4">Статус</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4 text-right">
+                    Действия
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
@@ -126,11 +128,13 @@ export default function UsersPage() {
                     key={u._id}
                     className={`hover:bg-slate-50/50 transition-colors ${u.isActive === false ? 'opacity-60 bg-slate-50/70' : ''}`}
                   >
-                    <td className="px-6 py-4 font-semibold text-slate-900">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 font-semibold text-slate-900">
                       {u.name}
                     </td>
-                    <td className="px-6 py-4 text-slate-600">{u.email}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 text-slate-600">
+                      {u.email}
+                    </td>
+                    <td className="px-3 sm:px-6 py-2 sm:py-4">
                       <span
                         className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                           u.role === 'admin'
@@ -141,7 +145,7 @@ export default function UsersPage() {
                         {u.role === 'admin' ? 'Администратор' : 'Сотрудник'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4">
                       <span
                         className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${
                           u.isActive === false
@@ -152,7 +156,7 @@ export default function UsersPage() {
                         {u.isActive === false ? 'Заблокирован' : 'Активен'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 text-right">
                       <button
                         onClick={() => setEditingUser(u)}
                         className="text-blue-600 hover:text-blue-800 font-medium text-xs transition-colors"

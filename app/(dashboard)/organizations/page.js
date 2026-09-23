@@ -147,10 +147,14 @@ export default function OrganizationsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="px-6 py-4">Название</th>
-                  <th className="px-6 py-4">Доступные сотрудники</th>
-                  <th className="px-6 py-4">Дата добавления</th>
-                  <th className="px-6 py-4 text-right">Действия</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4">Название</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4">
+                    Доступные сотрудники
+                  </th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4">Дата добавления</th>
+                  <th className="px-3 sm:px-6 py-2 sm:py-4 text-right">
+                    Действия
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
@@ -159,10 +163,10 @@ export default function OrganizationsPage() {
                     key={org._id}
                     className="hover:bg-slate-50/50 transition-colors"
                   >
-                    <td className="px-6 py-4 font-semibold text-slate-900">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 font-semibold text-slate-900">
                       {org.title}
                     </td>
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 text-slate-600">
                       {org.allowedUsers?.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
                           {org.allowedUsers.map((u) => (
@@ -180,10 +184,10 @@ export default function OrganizationsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-slate-500 text-xs">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 text-slate-500 text-xs">
                       {new Date(org.createdAt).toLocaleDateString('ru-RU')}
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 text-right space-y-2 md:space-y-0 md:space-x-2">
                       <button
                         onClick={() => openEditModal(org)}
                         className="text-blue-600 hover:text-blue-800 font-medium text-xs transition-colors"

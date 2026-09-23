@@ -170,7 +170,7 @@ export default function PaymentFormModal({
                   className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
                 />
                 <span className="text-slate-800 font-medium">{u.name}</span>
-                <span className="text-slate-400">({u.email})</span>
+                <span className="text-slate-400 hidden">({u.email})</span>
               </label>
             ))}
           </div>

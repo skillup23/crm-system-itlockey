@@ -92,7 +92,7 @@ export default function TaskCreateModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            placeholder="Например: Не работает принтер на складе"
+            placeholder="Краткое описание задачи"
             required
           />
         </div>
@@ -132,9 +132,9 @@ export default function TaskCreateModal({
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-            Исполнители * (можно выбрать нескольких)
+            Исполнители
           </label>
-          <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1">
+          <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1">
             {users.map((u) => (
               <label
                 key={u._id}
@@ -147,7 +147,9 @@ export default function TaskCreateModal({
                   className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
                 />
                 <span className="text-slate-800 font-medium">{u.name}</span>
-                <span className="text-xs text-slate-400">({u.email})</span>
+                <span className="text-xs text-slate-400 hidden">
+                  ({u.email})
+                </span>
               </label>
             ))}
           </div>
@@ -155,7 +157,7 @@ export default function TaskCreateModal({
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-            Описание проблемы
+            Описание
           </label>
           <textarea
             rows={4}
