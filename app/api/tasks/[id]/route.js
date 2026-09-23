@@ -59,9 +59,10 @@ export async function PUT(req, { params }) {
   const isManager = String(task.manager) === session.user.id;
   const isExecutor = task.executors?.some((u) => String(u) === session.user.id);
   const isObserver = task.observers?.some((u) => String(u) === session.user.id);
-  if (!isAdmin && !isManager && !isExecutor && !isObserver) {
+
+  if (!isAdmin && !isManager && !isExecutor) {
     return NextResponse.json(
-      { error: 'Нет доступа к редактированию' },
+      { error: 'Наблюдатели не могут редактировать задачу' },
       { status: 403 },
     );
   }
@@ -80,6 +81,7 @@ export async function PUT(req, { params }) {
   if (body.description !== undefined) task.description = body.description;
   if (body.company !== undefined) task.company = body.company;
   if (body.executors !== undefined) task.executors = body.executors;
+  if (body.observers !== undefined) task.observers = body.observers;
   if (body.status !== undefined) task.status = body.status;
   if (body.todoDeadline !== undefined) {
     task.todoDeadline = body.todoDeadline ? new Date(body.todoDeadline) : null;

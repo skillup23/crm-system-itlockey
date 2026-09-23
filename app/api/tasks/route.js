@@ -90,37 +90,74 @@ export async function POST(req) {
   }
 
   try {
-    const { title, description, company, executors, todoDeadline } =
-      await req.json();
+    const body = await req.json();
+    const { title, description, company, executors, observers, todoDeadline } =
+      body;
 
-    if (!title || !company || !executors || executors.length === 0) {
+    // Проверяем обязательные поля
+    if (!title || !company) {
       return NextResponse.json(
-        {
-          error:
-            'Заполните обязательные поля и укажите хотя бы одного исполнителя',
-        },
+        { error: 'Заполните тему задачи и укажите организацию' },
+        { status: 400 },
+      );
+    }
+
+    if (!executors || (Array.isArray(executors) && executors.length === 0)) {
+      return NextResponse.json(
+        { error: 'Выберите хотя бы одного исполнителя' },
         { status: 400 },
       );
     }
 
     await connectMongo();
 
-    const task = await Task.create({
+    // Безопасное определение ID постановщика (session.user.id или session.user._id)
+    const managerId = session.user.id || session.user._id;
+    if (!managerId) {
+      console.error(
+        'Ошибка: session.user.id отсутствует в сессии',
+        session.user,
+      );
+      return NextResponse.json(
+        {
+          error:
+            'Не удалось определить пользователя. Попробуйте перелогиниться',
+        },
+        { status: 400 },
+      );
+    }
+
+    // Фильтруем пустые элементы в массивах
+    const cleanExecutors = (
+      Array.isArray(executors) ? executors : [executors]
+    ).filter(Boolean);
+    const cleanObservers = (Array.isArray(observers) ? observers : []).filter(
+      Boolean,
+    );
+
+    const taskData = {
       title: title.trim(),
-      description: description || '',
+      description: description ? description.trim() : '',
       company: company.trim(),
-      executors: Array.isArray(executors) ? executors : [executors],
-      observers: Array.isArray(observers) ? observers : [],
-      manager: session.user.id,
-      todoDeadline: todoDeadline ? new Date(todoDeadline) : null,
+      executors: cleanExecutors,
+      observers: cleanObservers,
+      manager: managerId,
       status: 'Открыта',
-    });
+      isDeleted: false,
+    };
+
+    if (todoDeadline) {
+      taskData.todoDeadline = new Date(todoDeadline);
+    }
+
+    const task = await Task.create(taskData);
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
-    console.error('Ошибка создания задачи:', error);
+    // В терминале сервера сразу отобразится точная причина ошибки
+    console.error('Критическая ошибка в POST /api/tasks:', error);
     return NextResponse.json(
-      { error: 'Внутренняя ошибка сервера' },
+      { error: error.message || 'Внутренняя ошибка сервера' },
       { status: 500 },
     );
   }

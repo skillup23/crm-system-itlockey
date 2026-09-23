@@ -17,20 +17,18 @@ const TaskSchema = new mongoose.Schema(
       enum: ['Открыта', 'В работе', 'Ожидание', 'Закрыта', 'Архив'],
       default: 'Открыта',
     },
-    todoDeadline: { type: Date },
+    todoDeadline: { type: Date, default: null },
     manager: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-    }, // Постановщик задачи
-    executors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Исполнители
-    observers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Наблюдатели
+    },
+    executors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    observers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     comments: [CommentSchema],
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
-
-TaskSchema.index({ title: 'text', description: 'text' });
 
 export default mongoose.models.Task || mongoose.model('Task', TaskSchema);

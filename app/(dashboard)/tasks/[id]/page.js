@@ -21,7 +21,16 @@ export default function TaskDetailPage({ params }) {
 
   // Режим редактирования
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    company: '',
+    status: 'Открыта',
+    executors: [],
+    observers: [],
+    manager: '',
+    todoDeadline: '',
+  });
   const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -100,6 +109,7 @@ export default function TaskDetailPage({ params }) {
             company: taskData.company,
             status: taskData.status,
             executors: taskData.executors?.map((u) => u._id || u) || [],
+            observers: taskData.observers?.map((u) => u._id || u) || [], // <-- ДОБАВИТЬ СЮДА
             manager: taskData.manager?._id || '',
             todoDeadline: taskData.todoDeadline
               ? taskData.todoDeadline.substring(0, 10)
@@ -241,6 +251,12 @@ export default function TaskDetailPage({ params }) {
   const canChangeManager =
     session?.user?.role === 'admin' || session?.user?.id === task.manager?._id;
 
+  const userId = session?.user?.id;
+  const isAdmin = session?.user?.role === 'admin';
+  const isManager = String(task.manager?._id || task.manager) === userId;
+  const isExecutor = task.executors?.some((u) => String(u._id || u) === userId);
+  const canEdit = isAdmin || isManager || isExecutor;
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Верхняя навигация и кнопки */}
@@ -254,20 +270,38 @@ export default function TaskDetailPage({ params }) {
         <div className="flex items-center gap-2">
           {!isEditing ? (
             <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-              >
-                Редактировать
-              </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => setShowDeleteModal(true)}
-              >
-                Удалить
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setFormData({
+                      title: task.title || '',
+                      description: task.description || '',
+                      company: task.company || '',
+                      status: task.status || 'Открыта',
+                      executors: task.executors?.map((u) => u._id || u) || [],
+                      observers: task.observers?.map((u) => u._id || u) || [],
+                      manager: task.manager?._id || task.manager || '',
+                      todoDeadline: task.todoDeadline
+                        ? task.todoDeadline.substring(0, 10)
+                        : '',
+                    });
+                    setIsEditing(true);
+                  }}
+                >
+                  Редактировать
+                </Button>
+              )}
+              {(isAdmin || isManager) && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  Удалить
+                </Button>
+              )}
             </>
           ) : (
             <Button
@@ -304,7 +338,7 @@ export default function TaskDetailPage({ params }) {
                   </label>
                   <input
                     type="text"
-                    value={formData.title}
+                    value={formData?.title || ''}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
@@ -318,7 +352,7 @@ export default function TaskDetailPage({ params }) {
                   </label>
                   <textarea
                     rows={6}
-                    value={formData.description}
+                    value={formData?.description || ''}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
                     }
@@ -369,7 +403,7 @@ export default function TaskDetailPage({ params }) {
                     Статус
                   </label>
                   <select
-                    value={formData.status}
+                    value={formData?.status || 'Открыта'}
                     onChange={(e) =>
                       setFormData({ ...formData, status: e.target.value })
                     }
@@ -456,17 +490,26 @@ export default function TaskDetailPage({ params }) {
                 </div>
 
                 <div>
-                  <span className="text-slate-400 text-xs block">
-                    Наблюдатели:
-                  </span>
-                  <div className="font-semibold text-slate-800 space-y-0.5 mt-0.5">
-                    {task.observers?.length > 0 ? (
-                      task.observers.map((o) => <div key={o._id}>{o.name}</div>)
-                    ) : (
-                      <span className="text-slate-400 font-normal">
-                        Не назначены
-                      </span>
-                    )}
+                  <label className="block font-semibold text-slate-600 mb-1 text-xs uppercase">
+                    Наблюдатели
+                  </label>
+                  <div className="max-h-36 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1">
+                    {users.map((u) => (
+                      <label
+                        key={u._id}
+                        className="flex items-center gap-2 p-1.5 rounded hover:bg-slate-50 cursor-pointer text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.observers?.includes(u._id)}
+                          onChange={() => toggleObserverEdit(u._id)}
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                        />
+                        <span className="text-slate-800 font-medium">
+                          {u.name}
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 </div>
 
@@ -501,17 +544,23 @@ export default function TaskDetailPage({ params }) {
                   <span className="text-slate-400 block mb-1 text-xs uppercase font-semibold">
                     Быстрая смена статуса
                   </span>
-                  <select
-                    value={task.status}
-                    onChange={(e) => handleQuickStatusChange(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 p-2.5 text-sm font-semibold bg-white"
-                  >
-                    <option value="Открыта">Открыта</option>
-                    <option value="В работе">В работе</option>
-                    <option value="Ожидание">Ожидание</option>
-                    <option value="Закрыта">Закрыта</option>
-                    <option value="Архив">Архив</option>
-                  </select>
+                  {canEdit ? (
+                    <select
+                      value={task.status}
+                      onChange={(e) => handleQuickStatusChange(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 p-2.5 text-sm font-semibold bg-white"
+                    >
+                      <option value="Открыта">Открыта</option>
+                      <option value="В работе">В работе</option>
+                      <option value="Ожидание">Ожидание</option>
+                      <option value="Закрыта">Закрыта</option>
+                      <option value="Архив">Архив</option>
+                    </select>
+                  ) : (
+                    <div className="p-2 bg-slate-100 rounded-lg text-slate-700 text-sm font-semibold border border-slate-200">
+                      {task.status}
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 space-y-3">
@@ -546,6 +595,22 @@ export default function TaskDetailPage({ params }) {
                     <span className="font-semibold text-slate-800">
                       {task.manager?.name || '—'}
                     </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-xs block">
+                      Наблюдатели:
+                    </span>
+                    <div className="font-semibold text-slate-800 space-y-0.5 mt-0.5">
+                      {task.observers?.length > 0 ? (
+                        task.observers.map((o) => (
+                          <div key={o._id}>{o.name}</div>
+                        ))
+                      ) : (
+                        <span className="text-slate-400 font-normal">
+                          Не назначены
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <span className="text-slate-400 text-xs block">
