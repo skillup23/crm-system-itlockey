@@ -6,14 +6,33 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import TaskCreateModal from '@/components/tasks/TaskCreateModal';
+import TaskKanbanBoard from '@/components/tasks/TaskKanbanBoard';
 
 export default function TasksPage() {
-  const { data: session } = useSession(); // получаем сессию, чтобы знать, админ ли это
-  const [showAll, setShowAll] = useState(false); // вот наше состояние для чекбокса
+  const { data: session } = useSession();
+  const [showAll, setShowAll] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [organizations, setOrganizations] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Режим отображения: 'list' или 'kanban'
+  const [viewMode, setViewMode] = useState('list');
+
+  // Читаем сохраненный режим из localStorage без синхронного каскадного рендера
+  useEffect(() => {
+    const saved = localStorage.getItem('task_view_mode');
+    if (saved === 'kanban' || saved === 'list') {
+      queueMicrotask(() => {
+        setViewMode(saved);
+      });
+    }
+  }, []);
+
+  const switchViewMode = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('task_view_mode', mode);
+  };
 
   // Фильтры
   const [search, setSearch] = useState('');
@@ -34,6 +53,7 @@ export default function TasksPage() {
       if (executor) params.set('executor', executor);
       if (manager) params.set('manager', manager);
       if (isArchive) params.set('archive', 'true');
+      if (showAll) params.set('showAll', 'true');
 
       const res = await fetch(`/api/tasks?${params.toString()}`);
       const data = await res.json();
@@ -102,7 +122,25 @@ export default function TasksPage() {
     };
   }, [search, status, company, executor, manager, isArchive, showAll]);
 
-  // Функция определения дедлайна для цветовой подсветки
+  // Смена статуса при перетаскивании карточки в Канбане
+  const handleTaskStatusChange = async (taskId, newStatus) => {
+    try {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      // Обновляем статус задачи в общем списке
+      setTasks((prev) =>
+        prev.map((t) => (t._id === taskId ? { ...t, status: newStatus } : t)),
+      );
+    } catch (err) {
+      console.error('Ошибка обновления статуса:', err);
+      fetchTasks(); // Если упало, возвращаем реальные данные
+    }
+  };
+
   const getDeadlineStatus = (deadline, taskStatus) => {
     if (!deadline || taskStatus === 'Закрыта' || taskStatus === 'Архив')
       return null;
@@ -143,7 +181,35 @@ export default function TasksPage() {
               : 'Текущие задачи и обращения клиентов'}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Переключатель Список / Канбан (только для десктопа и не в архиве) */}
+          {!isArchive && (
+            <div className="hidden md:flex bg-slate-200/80 p-0.5 rounded-lg border border-slate-300">
+              <button
+                type="button"
+                onClick={() => switchViewMode('list')}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Список
+              </button>
+              <button
+                type="button"
+                onClick={() => switchViewMode('kanban')}
+                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+                  viewMode === 'kanban'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Канбан
+              </button>
+            </div>
+          )}
+
           <Link href="/tasks/trash">
             <Button variant="secondary" className="cursor-pointer">
               Корзина
@@ -179,7 +245,7 @@ export default function TasksPage() {
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 lg:col-span-2"
           />
 
-          {!isArchive && (
+          {!isArchive && viewMode === 'list' && (
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
@@ -233,18 +299,48 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Список карточек задач */}
-      <div className="space-y-3">
-        {loading ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-500 shadow-sm">
-            Загрузка задач...
+      {/* Область вывода задач (Канбан или Список) */}
+      {loading ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-500 shadow-sm">
+          Загрузка задач...
+        </div>
+      ) : tasks.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-sm text-slate-500 shadow-sm">
+          Задач не найдено
+        </div>
+      ) : !isArchive && viewMode === 'kanban' ? (
+        <>
+          {/* На десктопе отображается Канбан */}
+          <div className="hidden md:block">
+            <TaskKanbanBoard
+              tasks={tasks}
+              onTaskStatusChange={handleTaskStatusChange}
+              getDeadlineStatus={getDeadlineStatus}
+            />
           </div>
-        ) : tasks.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-sm text-slate-500 shadow-sm">
-            Задач не найдено
+          {/* На смартфонах автоматически показываем список */}
+          <div className="md:hidden space-y-3">
+            {tasks.map((task) => (
+              <Link
+                key={task._id}
+                href={`/tasks/${task._id}`}
+                className="block bg-white rounded-xl border border-slate-200 p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-slate-900 text-sm truncate max-w-[200px]">
+                    {task.title}
+                  </span>
+                  <StatusBadge status={task.status} />
+                </div>
+                <div className="text-xs text-slate-500">{task.company}</div>
+              </Link>
+            ))}
           </div>
-        ) : (
-          tasks.map((task) => {
+        </>
+      ) : (
+        /* Режим списка */
+        <div className="space-y-3">
+          {tasks.map((task) => {
             const deadlineAlert = getDeadlineStatus(
               task.todoDeadline,
               task.status,
@@ -281,7 +377,6 @@ export default function TasksPage() {
                     </p>
                   </div>
 
-                  {/* Мета-информация */}
                   <div className="flex items-center gap-4 text-xs text-slate-500 shrink-0 self-start md:self-auto">
                     <div>
                       <span className="text-slate-400">Исполнители: </span>
@@ -310,9 +405,9 @@ export default function TasksPage() {
                 </div>
               </Link>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {/* Модальное окно создания задачи */}
       <TaskCreateModal
