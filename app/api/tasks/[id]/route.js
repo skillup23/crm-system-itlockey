@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectMongo from '@/lib/mongodb';
 import Task from '@/models/Task';
+import { notifyUsers } from '@/lib/notifications';
 
 export async function GET(req, { params }) {
   const session = await getServerSession(authOptions);
@@ -93,6 +94,36 @@ export async function PUT(req, { params }) {
     .populate('manager', 'name email')
     .populate('executors', 'name email')
     .populate('observers', 'name email');
+
+  // Отправка уведомлений о статусе или изменениях задачи
+  const actorId = session.user.id || session.user._id;
+  const allParticipants = [
+    task.manager,
+    ...(task.executors || []),
+    ...(task.observers || []),
+  ];
+
+  if (body.status && body.status !== task.status) {
+    await notifyUsers({
+      recipients: allParticipants,
+      actorId,
+      actorName: session.user.name || 'Сотрудник',
+      taskId: task._id,
+      taskTitle: task.title,
+      actionType: 'status_changed',
+      message: `${session.user.name || 'Сотрудник'} изменил статус задачи «${task.title}» на «${body.status}»`,
+    });
+  } else if (body.title || body.description || body.executors) {
+    await notifyUsers({
+      recipients: allParticipants,
+      actorId,
+      actorName: session.user.name || 'Сотрудник',
+      taskId: task._id,
+      taskTitle: task.title,
+      actionType: 'task_updated',
+      message: `${session.user.name || 'Сотрудник'} отредактировал задачу «${task.title}»`,
+    });
+  }
 
   return NextResponse.json(updatedTask);
 }

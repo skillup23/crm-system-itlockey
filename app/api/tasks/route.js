@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectMongo from '@/lib/mongodb';
 import Task from '@/models/Task';
+import { notifyUsers } from '@/lib/notifications';
 
 export async function GET(req) {
   const session = await getServerSession(authOptions);
@@ -151,6 +152,18 @@ export async function POST(req) {
     }
 
     const task = await Task.create(taskData);
+
+    // Отправляем уведомления исполнителям и наблюдателям
+    const participants = [...cleanExecutors, ...cleanObservers];
+    await notifyUsers({
+      recipients: participants,
+      actorId: managerId,
+      actorName: session.user.name || 'Пользователь',
+      taskId: task._id,
+      taskTitle: task.title,
+      actionType: 'task_assigned',
+      message: `${session.user.name || 'Сотрудник'} поставил задачу «${task.title}»`,
+    });
 
     return NextResponse.json(task, { status: 201 });
   } catch (error) {

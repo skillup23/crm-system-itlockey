@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectMongo from '@/lib/mongodb';
 import Task from '@/models/Task';
+import { notifyUsers } from '@/lib/notifications';
 
 export async function POST(req, { params }) {
   const session = await getServerSession(authOptions);
@@ -36,6 +37,23 @@ export async function POST(req, { params }) {
 
   task.comments.push(newComment);
   await task.save();
+
+  // Уведомляем всех участников задачи о новом комментарии
+  const allParticipants = [
+    task.manager,
+    ...(task.executors || []),
+    ...(task.observers || []),
+  ];
+
+  await notifyUsers({
+    recipients: allParticipants,
+    actorId: session.user.id || session.user._id,
+    actorName: session.user.name || 'Сотрудник',
+    taskId: task._id,
+    taskTitle: task.title,
+    actionType: 'comment_added',
+    message: `${session.user.name || 'Сотрудник'} оставил комментарий в задаче «${task.title}»`,
+  });
 
   return NextResponse.json(newComment, { status: 201 });
 }

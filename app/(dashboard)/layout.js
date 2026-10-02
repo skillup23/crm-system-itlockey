@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import NotificationBell from '@/components/ui/NotificationBell';
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
@@ -34,9 +35,11 @@ export default function DashboardLayout({ children }) {
           <span className="text-lg font-black tracking-wider text-blue-400">
             IT CRM
           </span>
+
           <span className="text-[11px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded uppercase font-semibold">
             {session?.user?.role === 'admin' ? 'Admin' : 'Staff'}
           </span>
+          <NotificationBell />
         </div>
 
         <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
@@ -92,6 +95,7 @@ export default function DashboardLayout({ children }) {
       >
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <span className="text-lg font-black text-blue-400">IT CRM</span>
+          <NotificationBell />
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="p-2 text-slate-400 hover:text-white"
