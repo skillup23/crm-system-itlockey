@@ -198,48 +198,63 @@ export default function BackupsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredBackups.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 font-bold text-slate-900 text-sm">
-                      {item.server}
-                    </td>
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5">
-                      {getStatusBadge(item.status)}
-                    </td>
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-sm">
-                      {getCheckDateBadge(item.checkDate)}
-                    </td>
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-sm">
-                      {new Date(item.backupDate).toLocaleDateString('ru-RU')}
-                    </td>
-                    <td
-                      className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 max-w-xs truncate"
-                      title={item.comment}
+                {filteredBackups.map((item) => {
+                  const isAdmin = session?.user?.role === 'admin';
+                  const isEditor =
+                    item.allowedUsers?.some(
+                      (u) => String(u._id || u) === String(session?.user?.id),
+                    ) && session?.user?.role === 'editor';
+                  const isAuthor =
+                    String(item.createdBy) === String(session?.user?.id);
+                  const canEdit = isAdmin || isEditor || isAuthor;
+
+                  return (
+                    <tr
+                      key={item._id}
+                      className="hover:bg-slate-50/50 transition-colors"
                     >
-                      {item.comment || '—'}
-                    </td>
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-right space-x-2 whitespace-nowrap">
-                      <button
-                        onClick={() => {
-                          setEditingBackup(item);
-                          setIsModalOpen(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm"
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 font-bold text-slate-900 text-sm">
+                        {item.server}
+                      </td>
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5">
+                        {getStatusBadge(item.status)}
+                      </td>
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-sm">
+                        {getCheckDateBadge(item.checkDate)}
+                      </td>
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-sm">
+                        {new Date(item.backupDate).toLocaleDateString('ru-RU')}
+                      </td>
+                      <td
+                        className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 max-w-xs truncate"
+                        title={item.comment}
                       >
-                        Изменить
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(item._id)}
-                        className="text-red-500 hover:text-red-700 font-medium transition-colors text-sm"
-                      >
-                        Удалить
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                        {item.comment || '—'}
+                      </td>
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-right space-x-2 whitespace-nowrap">
+                        {canEdit && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingBackup(item);
+                                setIsModalOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm"
+                            >
+                              Изменить
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(item._id)}
+                              className="text-red-500 hover:text-red-700 font-medium transition-colors text-sm"
+                            >
+                              Удалить
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

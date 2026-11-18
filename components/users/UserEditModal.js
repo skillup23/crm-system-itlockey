@@ -101,6 +101,7 @@ export default function UserEditModal({
               className="w-full rounded-lg border border-slate-300 p-2.5 text-sm outline-none focus:border-blue-500 bg-white disabled:bg-slate-100"
             >
               <option value="user">Сотрудник</option>
+              <option value="editor">Редактор</option>
               <option value="admin">Администратор</option>
             </select>
           </div>

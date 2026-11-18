@@ -20,9 +20,13 @@ export async function PUT(req, { params }) {
     return NextResponse.json({ error: 'Запись не найдена' }, { status: 404 });
   }
 
-  const isAdmin = session.user.role === 'admin';
-  const isAuthor = String(item.author) === session.user.id;
-  if (!isAdmin && !isAuthor) {
+  const isAdmin = session?.user?.role === 'admin';
+  const isEditor =
+    item.allowedUsers?.some(
+      (userId) => String(userId) === String(session?.user?.id),
+    ) && session?.user?.role === 'editor';
+  const isAuthor = String(item.author) === session?.user?.id;
+  if (!isAdmin && !isEditor && !isAuthor) {
     return NextResponse.json(
       { error: 'Нет прав на редактирование' },
       { status: 403 },
@@ -55,9 +59,13 @@ export async function DELETE(req, { params }) {
     return NextResponse.json({ error: 'Запись не найдена' }, { status: 404 });
   }
 
-  const isAdmin = session.user.role === 'admin';
-  const isAuthor = String(item.author) === session.user.id;
-  if (!isAdmin && !isAuthor) {
+  const isAdmin = session?.user?.role === 'admin';
+  const isEditor =
+    item.allowedUsers?.some(
+      (userId) => String(userId) === String(session?.user?.id),
+    ) && session?.user?.role === 'editor';
+  const isAuthor = String(item.author) === session?.user?.id;
+  if (!isAdmin && !isEditor && !isAuthor) {
     return NextResponse.json(
       { error: 'Нет прав на удаление' },
       { status: 403 },

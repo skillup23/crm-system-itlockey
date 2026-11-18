@@ -211,46 +211,63 @@ export default function PaymentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredPayments.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 font-bold text-slate-900 text-base">
-                      {item.domen}
-                    </td>
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-base">
-                      <div>{item.registrator || '—'}</div>
-                      <div className="mt-1">{getDateBadge(item.datedomen)}</div>
-                    </td>
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-base">
-                      <div>{item.hosting || '—'}</div>
-                      <div className="mt-1">
-                        {getDateBadge(item.datehosting)}
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-500 text-base">
-                      {item.author?.name || '—'}
-                    </td>
-                    <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-right space-x-2 whitespace-nowrap">
-                      <button
-                        onClick={() => {
-                          setEditingPayment(item);
-                          setIsModalOpen(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                      >
-                        Изменить
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(item._id)}
-                        className="text-red-500 hover:text-red-700 font-medium transition-colors"
-                      >
-                        Удалить
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredPayments.map((item) => {
+                  const isAdmin = session?.user?.role === 'admin';
+                  const isEditor =
+                    item.allowedUsers?.some(
+                      (u) => String(u._id || u) === String(session?.user?.id),
+                    ) && session?.user?.role === 'editor';
+                  const isAuthor =
+                    String(item.createdBy) === String(session?.user?.id);
+                  const canEdit = isAdmin || isEditor || isAuthor;
+
+                  return (
+                    <tr
+                      key={item._id}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 font-bold text-slate-900 text-base">
+                        {item.domen}
+                      </td>
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-base">
+                        <div>{item.registrator || '—'}</div>
+                        <div className="mt-1">
+                          {getDateBadge(item.datedomen)}
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-600 text-base">
+                        <div>{item.hosting || '—'}</div>
+                        <div className="mt-1">
+                          {getDateBadge(item.datehosting)}
+                        </div>
+                      </td>
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-slate-500 text-base">
+                        {item.author?.name || '—'}
+                      </td>
+                      <td className="px-3 sm:px-5 py-2 sm:py-3.5 text-right space-x-2 whitespace-nowrap">
+                        {canEdit && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingPayment(item);
+                                setIsModalOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                            >
+                              Изменить
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(item._id)}
+                              className="text-red-500 hover:text-red-700 font-medium transition-colors"
+                            >
+                              Удалить
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

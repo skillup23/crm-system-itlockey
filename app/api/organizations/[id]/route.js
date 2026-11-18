@@ -25,10 +25,13 @@ export async function PUT(req, { params }) {
   }
 
   // Проверка прав: админ или автор записи
-  if (
-    session.user.role !== 'admin' &&
-    String(org.createdBy) !== session.user.id
-  ) {
+  const isAdmin = session?.user?.role === 'admin';
+  const isEditor =
+    org.allowedUsers?.some(
+      (userId) => String(userId) === String(session?.user?.id),
+    ) && session?.user?.role === 'editor';
+  const isAuthor = String(org.createdBy) === String(session?.user?.id);
+  if (!isAdmin && !isEditor && !isAuthor) {
     return NextResponse.json(
       { error: 'Нет прав на редактирование' },
       { status: 403 },
@@ -60,10 +63,14 @@ export async function DELETE(req, { params }) {
     );
   }
 
-  if (
-    session.user.role !== 'admin' &&
-    String(org.createdBy) !== session.user.id
-  ) {
+  const isAdmin = session?.user?.role === 'admin';
+  const isEditor =
+    org.allowedUsers?.some(
+      (userId) => String(userId) === String(session?.user?.id),
+    ) && session?.user?.role === 'editor';
+  const isAuthor = String(org.createdBy) === String(session?.user?.id);
+
+  if (!isAdmin && !isEditor && !isAuthor) {
     return NextResponse.json(
       { error: 'Нет прав на удаление' },
       { status: 403 },

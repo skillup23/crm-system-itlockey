@@ -175,51 +175,67 @@ export default function OrganizationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm">
-                {organizations.map((org) => (
-                  <tr
-                    key={org._id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-3 sm:px-6 py-2 sm:py-4 font-semibold text-slate-900">
-                      {org.title}
-                    </td>
-                    <td className="px-3 sm:px-6 py-2 sm:py-4 text-slate-600">
-                      {org.allowedUsers?.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {org.allowedUsers.map((u) => (
-                            <span
-                              key={u._id}
-                              className="inline-block px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs border border-slate-200"
+                {organizations.map((org) => {
+                  const isAdmin = session?.user?.role === 'admin';
+                  const isEditor =
+                    org.allowedUsers?.some(
+                      (u) => String(u._id || u) === String(session?.user?.id),
+                    ) && session?.user?.role === 'editor';
+                  const isAuthor =
+                    String(org.createdBy) === String(session?.user?.id);
+                  const canEdit = isAdmin || isEditor || isAuthor;
+
+                  return (
+                    <tr
+                      key={org._id}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 font-semibold text-slate-900">
+                        {org.title}
+                      </td>
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 text-slate-600">
+                        {org.allowedUsers?.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {org.allowedUsers.map((u) => (
+                              <span
+                                key={u._id}
+                                className="inline-block px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs border border-slate-200"
+                              >
+                                {u.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">
+                            Всем (или не назначены)
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 text-slate-500 text-xs">
+                        {new Date(org.createdAt).toLocaleDateString('ru-RU')}
+                      </td>
+
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 text-right space-y-2 md:space-y-0 md:space-x-2">
+                        {canEdit && (
+                          <>
+                            <button
+                              onClick={() => openEditModal(org)}
+                              className="text-blue-600 hover:text-blue-800 font-medium text-xs transition-colors"
                             >
-                              {u.name}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">
-                          Всем (или не назначены)
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 sm:px-6 py-2 sm:py-4 text-slate-500 text-xs">
-                      {new Date(org.createdAt).toLocaleDateString('ru-RU')}
-                    </td>
-                    <td className="px-3 sm:px-6 py-2 sm:py-4 text-right space-y-2 md:space-y-0 md:space-x-2">
-                      <button
-                        onClick={() => openEditModal(org)}
-                        className="text-blue-600 hover:text-blue-800 font-medium text-xs transition-colors"
-                      >
-                        Изменить
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirmId(org._id)}
-                        className="text-red-500 hover:text-red-700 font-medium text-xs transition-colors"
-                      >
-                        Удалить
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                              Изменить
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(org._id)}
+                              className="text-red-500 hover:text-red-700 font-medium text-xs transition-colors"
+                            >
+                              Удалить
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

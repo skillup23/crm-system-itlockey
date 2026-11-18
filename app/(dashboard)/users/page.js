@@ -139,10 +139,16 @@ export default function UsersPage() {
                         className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                           u.role === 'admin'
                             ? 'bg-purple-50 text-purple-700 border-purple-200'
-                            : 'bg-slate-100 text-slate-700 border-slate-200'
+                            : u.role === 'editor'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-slate-100 text-slate-700 border-slate-200'
                         }`}
                       >
-                        {u.role === 'admin' ? 'Администратор' : 'Сотрудник'}
+                        {u.role === 'admin'
+                          ? 'Администратор'
+                          : u.role === 'editor'
+                            ? 'Редактор'
+                            : 'Сотрудник'}
                       </span>
                     </td>
                     <td className="px-3 sm:px-6 py-2 sm:py-4">
@@ -231,6 +237,7 @@ export default function UsersPage() {
               className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-blue-500 bg-white"
             >
               <option value="user">Сотрудник</option>
+              <option value="editor">Редактор</option>
               <option value="admin">Администратор</option>
             </select>
           </div>
