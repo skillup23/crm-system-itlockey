@@ -31,7 +31,10 @@ export async function GET(req) {
 
 export async function POST(req) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'admin') {
+  if (
+    !session ||
+    (session.user.role !== 'admin' && session.user.role !== 'editor')
+  ) {
     return NextResponse.json(
       { error: 'Только администратор может добавлять статьи' },
       { status: 403 },

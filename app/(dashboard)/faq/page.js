@@ -17,11 +17,12 @@ export default function FAQPage() {
     async function load() {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        if (selectedGroup !== 'all') params.set('group', selectedGroup);
-        if (search.trim()) params.set('search', search.trim());
+        // const params = new URLSearchParams();
+        // if (selectedGroup !== 'all') params.set('group', selectedGroup);
+        // if (search.trim()) params.set('search', search.trim());
 
-        const res = await fetch(`/api/faq?${params.toString()}`);
+        // const res = await fetch(`/api/faq?${params.toString()}`);
+        const res = await fetch(`/api/faq`);
         const data = await res.json();
         if (!ignore) {
           setArticles(Array.isArray(data) ? data : []);
@@ -35,9 +36,25 @@ export default function FAQPage() {
     return () => {
       ignore = true;
     };
-  }, [selectedGroup, search]);
+  }, []);
 
   const groups = ['all', ...Array.from(new Set(articles.map((a) => a.group)))];
+
+  const filteredArticles = articles.filter((art) => {
+    const matchesGroup = selectedGroup === 'all' || art.group === selectedGroup;
+
+    const query = search.trim().toLowerCase();
+    const matchesSearch =
+      search.trim() === '' ||
+      art.title.toLowerCase().includes(query) ||
+      art.content?.toLowerCase().includes(query);
+
+    return matchesGroup && matchesSearch;
+  });
+
+  const isAdmin = session?.user?.role === 'admin';
+  const isEditor = session?.user?.role === 'editor';
+  const canCreate = isAdmin || isEditor;
 
   return (
     <div className="space-y-6">
@@ -48,7 +65,7 @@ export default function FAQPage() {
             Инструкции, документация по серверам и типовые регламенты
           </p>
         </div>
-        {session?.user?.role === 'admin' && (
+        {canCreate && (
           <Link href="/faq/new">
             <Button variant="primary" className="cursor-pointer">
               + Написать статью
@@ -89,7 +106,7 @@ export default function FAQPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-500 shadow-sm">
           Загрузка статей базы знаний...
         </div>
-      ) : articles.length === 0 ? (
+      ) : filteredArticles.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-sm text-slate-500 shadow-sm">
           Статей пока нет.{' '}
           {session?.user?.role === 'admin' &&
@@ -97,7 +114,7 @@ export default function FAQPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {articles.map((art) => (
+          {filteredArticles.map((art) => (
             <Link
               key={art._id}
               href={`/faq/${art._id}`}

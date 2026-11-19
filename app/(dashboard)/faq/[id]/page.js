@@ -62,6 +62,10 @@ export default function ArticleViewPage({ params }) {
     );
   }
 
+  const isAdmin = session?.user?.role === 'admin';
+  const isEditor = session?.user?.role === 'editor';
+  const canEditOrDelete = isAdmin || isEditor;
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
@@ -71,7 +75,7 @@ export default function ArticleViewPage({ params }) {
         >
           ← Все статьи
         </Link>
-        {session?.user?.role === 'admin' && (
+        {canEditOrDelete && (
           <div className="flex items-center gap-2">
             <Link href={`/faq/${id}/edit`}>
               <Button

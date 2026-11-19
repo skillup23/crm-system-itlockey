@@ -5,7 +5,10 @@ import { uploadToS3 } from '@/lib/s3';
 
 export async function POST(req) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'admin') {
+  if (
+    !session ||
+    (session.user.role !== 'admin' && session.user.role !== 'editor')
+  ) {
     return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
   }
 

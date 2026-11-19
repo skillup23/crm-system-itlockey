@@ -23,7 +23,10 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'admin') {
+  if (
+    !session ||
+    (session.user.role !== 'admin' && session.user.role !== 'editor')
+  ) {
     return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
   }
 
@@ -47,7 +50,10 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'admin') {
+  if (
+    !session ||
+    (session.user.role !== 'admin' && session.user.role !== 'editor')
+  ) {
     return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
   }
 
