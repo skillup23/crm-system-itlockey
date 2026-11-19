@@ -164,6 +164,8 @@ export default function ArticleViewPage({ params }) {
                 <img
                   src={src}
                   alt={alt}
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
                   className="rounded-xl border border-slate-200 max-w-full h-auto my-4 shadow-sm"
                 />
               ),
