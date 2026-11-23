@@ -8,7 +8,7 @@ import NotificationBell from '@/components/ui/NotificationBell';
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
@@ -27,13 +27,47 @@ export default function DashboardLayout({ children }) {
     signOut({ redirect: true, callbackUrl: '/login' });
   };
 
+  // Пока NextAuth проверяет сессию — показываем нейтральный экран загрузки без сайдбара
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-sm font-medium text-slate-400">Загрузка...</div>
+      </div>
+    );
+  }
+  // Если пользователь не авторизован — показываем базовую верстку без сайдбара и с кнопкой входа
+  if (status !== 'loading' && !session) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        <header className="bg-slate-900 text-white px-4 md:px-8 py-4 border-b border-slate-800 flex items-center justify-between">
+          <Link
+            href="/faq"
+            className="text-lg font-black tracking-wider text-blue-400"
+          >
+            IT LOCKEY{' '}
+            <span className="text-slate-400 font-medium text-sm">
+              | База знаний
+            </span>
+          </Link>
+          <Link
+            href="/login"
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
+          >
+            Войти в CRM
+          </Link>
+        </header>
+        <main className="flex-1 p-4 md:p-8">{children}</main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
       {/* Десктопный Sidebar */}
       <aside className="hidden md:flex md:w-64 flex-col bg-slate-900 text-white shadow-xl">
         <div className="p-5 border-b border-slate-800 flex items-center justify-between">
           <span className="text-lg font-black tracking-wider text-blue-400">
-            IT CRM
+            IT LOCKEY
           </span>
 
           <span className="text-[11px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded uppercase font-semibold">
@@ -94,7 +128,7 @@ export default function DashboardLayout({ children }) {
         }`}
       >
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <span className="text-lg font-black text-blue-400">IT CRM</span>
+          <span className="text-lg font-black text-blue-400">IT LOCKEY</span>
           <NotificationBell />
           <button
             onClick={() => setMobileMenuOpen(false)}

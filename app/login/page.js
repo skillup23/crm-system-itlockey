@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -94,6 +95,15 @@ export default function LoginPage() {
             Войти
           </button>
         </form>
+
+        <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+          <Link
+            href="/faq"
+            className="inline-flex items-center justify-center w-full rounded-lg border border-slate-300 bg-slate-50 py-2.5 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all"
+          >
+            Перейти в базу знаний (FAQ) →
+          </Link>
+        </div>
       </div>
     </div>
   );

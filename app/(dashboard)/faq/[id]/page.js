@@ -24,8 +24,10 @@ export default function ArticleViewPage({ params }) {
       try {
         const res = await fetch(`/api/faq/${id}`);
         const data = await res.json();
-        if (!ignore && res.ok) {
-          setArticle(data);
+        if (!ignore) {
+          if (res.ok) {
+            setArticle(data);
+          }
           setLoading(false);
         }
       } catch (err) {

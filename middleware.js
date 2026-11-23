@@ -5,11 +5,23 @@ export async function middleware(req) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname } = req.nextUrl;
 
+  // Разрешаем публичный просмотр списка FAQ и отдельных статей (но НЕ /faq/new и НЕ /faq/[id]/edit)
+  const isPublicFaqPage =
+    pathname === '/faq' ||
+    (/^\/faq\/[^/]+$/.test(pathname) && pathname !== '/faq/new');
+
+  // Разрешаем только GET-запросы к API FAQ без токена
+  const isPublicFaqApi =
+    req.method === 'GET' &&
+    (pathname === '/api/faq' || /^\/api\/faq\/[^/]+$/.test(pathname));
+
   // Пропускаем системные служебные маршруты и статику
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/login') ||
+    isPublicFaqPage ||
+    isPublicFaqApi ||
     pathname.includes('.')
   ) {
     return NextResponse.next();

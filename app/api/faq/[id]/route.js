@@ -6,9 +6,9 @@ import Article from '@/models/Article';
 
 export async function GET(req, { params }) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
-  }
+  // if (!session) {
+  //   return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
+  // }
 
   const { id } = await params;
   await connectMongo();
